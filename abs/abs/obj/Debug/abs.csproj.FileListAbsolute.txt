@@ -8,3 +8,14 @@ C:\Users\Benny\Desktop\GitHub\abs\abs\abs\bin\Debug\System.Threading.Tasks.Exten
 C:\Users\Benny\Desktop\GitHub\abs\abs\abs\obj\Debug\abs.csprojResolveAssemblyReference.cache
 C:\Users\Benny\Desktop\GitHub\abs\abs\abs\obj\Debug\abs.exe
 C:\Users\Benny\Desktop\GitHub\abs\abs\abs\obj\Debug\abs.pdb
+C:\Users\Quinn\Documents\GitHub\abs\abs\abs\bin\Debug\abs.exe.config
+C:\Users\Quinn\Documents\GitHub\abs\abs\abs\bin\Debug\abs.exe
+C:\Users\Quinn\Documents\GitHub\abs\abs\abs\bin\Debug\abs.pdb
+C:\Users\Quinn\Documents\GitHub\abs\abs\abs\bin\Debug\Npgsql.dll
+C:\Users\Quinn\Documents\GitHub\abs\abs\abs\bin\Debug\System.Threading.Tasks.Extensions.dll
+C:\Users\Quinn\Documents\GitHub\abs\abs\abs\bin\Debug\Npgsql.xml
+C:\Users\Quinn\Documents\GitHub\abs\abs\abs\bin\Debug\System.Threading.Tasks.Extensions.xml
+C:\Users\Quinn\Documents\GitHub\abs\abs\abs\obj\Debug\abs.csprojResolveAssemblyReference.cache
+C:\Users\Quinn\Documents\GitHub\abs\abs\abs\obj\Debug\abs.exe
+C:\Users\Quinn\Documents\GitHub\abs\abs\abs\obj\Debug\abs.pdb
+C:\Users\Quinn\Documents\GitHub\abs\abs\abs\bin\Debug\monopage.dll

@@ -1,0 +1,25 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <link href="https://fonts.googleapis.com/css?family=Encode+Sans" rel="stylesheet">
+    <meta charset="utf-8" />
+    @{cssref}
+    <title>monopage</title>
+</head>
+<body>
+    <div class="mpHeaderContainer" id="mpHeader">
+        @{header}
+    </div>
+    <div class="main">
+        <div class="mpSidePadding" id="leftSidebar"></div>
+            <div class="innerContent">
+                @{content ...}
+            </div>
+        <div class="mpSidePadding" id="rightSidebar"></div>
+    </div>
+    <div class="mpFooterContainer" id="mpFooter">
+        @{footer}
+    </div>
+</body>
+</html>
