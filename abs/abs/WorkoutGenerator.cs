@@ -32,9 +32,38 @@ namespace abs {
         private string equipment;
         private int numExercises;
 
-        //TODO work on this
+
         public ExerciseList() {
             this.numExercises = 0;
+        }
+
+        //TODO find more elegant way to do this
+        public string generateAllExerciseInformationHTMLString() {
+            string exerciseInformation = "<table><tr><th>Exercise</th><th>Specified Area</th><th>Reps</th><th>Sets</th><th>Weights</th><th>Equipment Required</th></tr><tr>";
+            foreach(Exercise e in Exercises) {
+                exerciseInformation += "<td>" + e.exerciseName + "</td>";
+            }
+            exerciseInformation += "</tr><tr>";
+            foreach (Exercise e in Exercises) {
+                exerciseInformation += "<td>" + e.specifiedArea + "</td>";
+            }
+            exerciseInformation += "</tr><tr>";
+            foreach (Exercise e in Exercises) {
+                exerciseInformation += "<td>" + string.Join(",", e.reps) + "</td>";
+            }
+            exerciseInformation += "</tr><tr>";
+            foreach (Exercise e in Exercises) {
+                exerciseInformation += "<td>" + e.sets.ToString() + "</td>";
+            }
+            exerciseInformation += "</tr><tr>";
+            foreach (Exercise e in Exercises) {
+                exerciseInformation += "<td>" + string.Join(",", e.sets) + "</td>";
+            }
+            exerciseInformation += "</tr><tr>";
+            foreach (Exercise e in Exercises) {
+                exerciseInformation += "<td>" + e.equipment + "</td>";
+            }
+            return exerciseInformation += "</tr></table>"; ;
         }
 
         public void sortExercisesByEquipment(string[] equipmentAvailable) {
