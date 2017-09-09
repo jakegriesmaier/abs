@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace abs {
     //TODO finish
@@ -67,16 +68,7 @@ namespace abs {
         }
 
         public void sortExercisesByEquipment(string[] equipmentAvailable) {
-            bool keep = false;
-            foreach (Exercise e in Exercises) {
-                for (int i = 0; i < equipmentAvailable.Length; i++) {
-                    if (e.getEquipment() == equipmentAvailable[i]) {
-                        keep = true;
-                    }
-                }
-                if (keep == false) removeExercise(e);
-                keep = false;
-            }
+            throw new NotImplementedException();
         }
 
         public void addExercise(Exercise exercise) {

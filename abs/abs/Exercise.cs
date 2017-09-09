@@ -43,7 +43,7 @@
         }
         private LiftType liftType;
         private int areaNumber;
-        private bool requiresWeight;
+        private bool requiresWeight;        
         public int[] reps {
             get; private set;
         }

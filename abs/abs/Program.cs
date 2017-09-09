@@ -37,7 +37,7 @@ namespace abs {
 
     class Program {
         static void Main(string[] args) {
-            Database db = new Database("Server=localhost;Port=5432;Username=postgres;Password=root;Database=postgres");
+            Database db = new Database("Server=localhost;Port=5432;Username=postgres;Password=admin;Database=postgres");
 
             //refresh users table
             db.deleteTableIfExists("users");
@@ -67,7 +67,7 @@ namespace abs {
 
             mpBase mpBase = new mpBase();
 
-            mpBase.addProperty("test", "the value at test");
+            mpBase.addProperty("test", new mpValue("the value at test"));
 
             mpBase.addProperty("users", new mpQuery(db, "SELECT * FROM users"));
 
@@ -85,7 +85,6 @@ namespace abs {
 
             mpPageAssembler assembler = new mpPageAssembler(
                 new mpFile("../../Web/Templates/Template.html"),
-                new mpFile("../../Web/Templates/Template.js"),
                 new mpFile("../../Web/Templates/Template.css")
             );
             assembler.add("header", new mpFile("../../Web/Header.html"), true, false);
@@ -94,28 +93,56 @@ namespace abs {
             assembler.add("register", new mpPageElement(new mpFile("../../Web/register.html"), new mpFile("../../Web/register.js")), false, true);
             assembler.add("data", new mpPageElement(new mpFile("../../Web/dataEntry.html"), new mpFile("../../Web/dataEntry.js")), false, true);
 
+            mpPageAssembler ass = new mpPageAssembler(new mpFile("../../Web/loginEngine.html"), new mpFile(new binaryData("", binaryDataType.css)));
+            ass.add("loginItem", new mpFile(new binaryData("document.cookie = \"Authorization=user:pass\";")));
+            mpBase.addProperty("loginCookier", ass);
 
-            mpArray registerTarget = new mpArray();
-            registerTarget.processAdd = request => {
-                if (request.value is mpObject) {
+            mpPageAssembler logoutEngine = new mpPageAssembler(new mpFile("../../Web/loginEngine.html"), new mpFile(new binaryData("", binaryDataType.css)));
+            logoutEngine.add("loginItem", new mpFile(new binaryData("document.cookie = \"Authorization=none\";")));
+            mpBase.addProperty("logoutEngine", logoutEngine);
+
+            mpRestfulTarget loginTestTarget = new mpRestfulTarget(new Func<System.Net.HttpListenerRequest, mpResponse>(
+                rq => {
+                    if (rq.Cookies["Authorization"].Value == "user:pass") {
+                        return new mpResponse("nice", 200);
+                    } else {
+                        return new mpResponse("not authenticated", 401);
+                    }
+                }
+            ));
+            mpBase.addProperty("login", loginTestTarget);
+            
+
+            mpRestfulTarget registerTarget = new mpRestfulTarget(null);
+            registerTarget.POSTFunc = request => {
+                mpToken parsed = mpJson.parse(request.data());
+                mpObject rqtoken = parsed as mpObject;
+                if (rqtoken is mpObject) {
                     string username = null;
                     string password = null;
                     string email = null;
 
-                    mpToken usernameToke = request.value.getChild("username");
-                    if (usernameToke != null && usernameToke is mpValue && (usernameToke as mpValue).binaryData.type == binaryDataType.text) {
-                        username = (usernameToke as mpValue).binaryData.asString();
+                    mpToken usernameToke = rqtoken.getChild("username");
+                    if (usernameToke != null && usernameToke is mpValue && (usernameToke as mpValue).data.type == binaryDataType.text) {
+                        username = (usernameToke as mpValue).data.asString();
                     }
-                    mpToken passwordToke = request.value.getChild("password");
-                    if (passwordToke != null && passwordToke is mpValue && (passwordToke as mpValue).binaryData.type == binaryDataType.text) {
-                        password = (passwordToke as mpValue).binaryData.asString();
+                    mpToken passwordToke = rqtoken.getChild("password");
+                    if (passwordToke != null && passwordToke is mpValue && (passwordToke as mpValue).data.type == binaryDataType.text) {
+                        password = (passwordToke as mpValue).data.asString();
                     }
-                    mpToken emailToke = request.value.getChild("email");
-                    if (emailToke != null && emailToke is mpValue && (emailToke as mpValue).binaryData.type == binaryDataType.text) {
-                        email = (emailToke as mpValue).binaryData.asString();
+                    mpToken emailToke = rqtoken.getChild("email");
+                    if (emailToke != null && emailToke is mpValue && (emailToke as mpValue).data.type == binaryDataType.text) {
+                        email = (emailToke as mpValue).data.asString();
                     }
 
-                    man.addUser(username, password, email);
+                    if (username != null && password != null && email != null) {
+                        man.addUser(username, password, email);
+                        return mpResponse.empty200();
+                    } else {
+                        return mpResponse.badRequest();
+                    }
+                } else {
+                    return mpResponse.badRequest();
                 }
             };
             mpBase.addProperty("registerTarget", registerTarget);
