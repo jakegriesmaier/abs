@@ -134,8 +134,9 @@ namespace abs {
                 string htmlRes = "";
 
                 var res = db.query("SELECT date, value FROM weight WHERE userid = '" + lman.checkRequest(rq).userid + "'");
-                double min = res["value"].Select(data => data.asDouble()).Min();
-                double max = res["value"].Select(data => data.asDouble()).Max();
+                double min = res["value"].Select(data => double.Parse(data.asString())).Min();
+                double max = res["value"].Select(data => double.Parse(data.asString())).Max();
+                    
 
                 htmlRes += "<div class='mpContentContainer'>" +
                             "< div style = 'background-color: burlywood; display: flex; flex-direction: row; align-items: stretch; width: 100%; height: 10vw;' >" +
