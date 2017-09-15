@@ -34,7 +34,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="monopage, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\monopage.0.0.4\lib\net452\monopage.dll</HintPath>
+      <HintPath>..\packages\monopage.0.1.4\lib\net452\monopage.dll</HintPath>
     </Reference>
     <Reference Include="Npgsql, Version=3.2.5.0, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7, processorArchitecture=MSIL">
       <HintPath>..\packages\Npgsql.3.2.5\lib\net451\Npgsql.dll</HintPath>
@@ -76,6 +76,8 @@
     <Content Include="Web\Header.html" />
     <Content Include="Web\login.html" />
     <Content Include="Web\login.js" />
+    <Content Include="Web\minmax.html" />
+    <Content Include="Web\minmax.js" />
     <Content Include="Web\register.html" />
     <Content Include="Web\register.js" />
     <Content Include="Web\Templates\Template.css" />

@@ -64,6 +64,6 @@
     }
 }
 
-let ent = new dataEntry(document.getElementById("dataEntry"), "/userRecordings/weight", 500, 250);
+let ent = new dataEntry(document.getElementById("dataEntry"), "/login/weight", 500, 250);
 
 ent.drawData();

@@ -15,7 +15,7 @@ namespace abs {
         public void addUser(string username, string password, string email) {
             string userid = Guid.NewGuid().ToString();
             string usersalt = Guid.NewGuid().ToString();
-            string userpass = md5((password + usersalt).AsBytes());
+            string userpass = password + usersalt;
 
             addUserFullData(userid, username, email, usersalt, userpass);
         }
@@ -51,7 +51,7 @@ namespace abs {
 
             //initialize userManager
             userManager man = new userManager(db);
-            man.addUserFullData("testid", "testuser", "testemail@gmail.com", "testsalt", "testhash");
+            man.addUser("user", "pass", "user@gmail.com");
 
             //refresh data tables
             db.deleteTableIfExists("weight");
@@ -62,22 +62,47 @@ namespace abs {
             }));
 
             for (int i = 0; i < 50; i++) {
-                db.addRow("weight", new List<string>(new string[] { "testid", DateTime.UtcNow.ToString(), (i * i / 50 + 100).ToString() }));
+                db.addRow("weight", new List<string>(new string[] { "user", DateTime.UtcNow.ToString(), (i * i / 50 + 100).ToString() }));
             }
+            
+
+
+
+
 
             mpBase mpBase = new mpBase();
 
-            mpBase.addProperty("test", new mpValue("the value at test"));
-
-            mpBase.addProperty("users", new mpQuery(db, "SELECT * FROM users"));
+            
 
             Func<Dictionary<string, List<binaryData>>, mpObject> queryResultToJSON = kvpDic => {
                 mpObject res = new mpObject();
+                if (kvpDic == null) return res;
                 foreach(var kvp in kvpDic) {
                     res.addProperty(kvp.Key, new mpArray(kvp.Value.Select(bin => bin.asString()).ToArray()));
                 }
                 return res;
             };
+
+
+
+
+            mpAuth lman = new mpAuth(db);
+            lman.add("weight", authToke => {
+                if (authToke.userid != "") {
+                    return new mpFunctionalGETableToken(() => {
+                        string query = "SELECT date, value FROM weight WHERE userid = '" + authToke.userid + "'";
+                        //query = "userid=" + authToke.userid +
+                        return new binaryData(queryResultToJSON(db.query(query)).json);
+                    });
+                } else {
+                    return new mpArray();
+                }
+            });
+            mpBase.addProperty("login", lman);
+
+
+
+
 
             mpBase.addProperty("userRecordings", new mpChildGetter(child => {
                 return queryResultToJSON(db.query("SELECT date, value FROM " + child + " WHERE userid = 'testid'"));
@@ -87,11 +112,43 @@ namespace abs {
                 new mpFile("../../Web/Templates/Template.html"),
                 new mpFile("../../Web/Templates/Template.css")
             );
+
+
+
             assembler.add("header", new mpFile("../../Web/Header.html"), true, false);
             assembler.add("footer", new mpFile("../../Web/Footer.html"), false, false);
             assembler.add("login", new mpPageElement(new mpFile("../../Web/login.html"), new mpFile("../../Web/login.js")), false, true);
             assembler.add("register", new mpPageElement(new mpFile("../../Web/register.html"), new mpFile("../../Web/register.js")), false, true);
             assembler.add("data", new mpPageElement(new mpFile("../../Web/dataEntry.html"), new mpFile("../../Web/dataEntry.js")), false, true);
+
+
+
+
+
+            assembler.add("minmax", new mpPageElement(new mpFile("../../Web/minmax.html"), new mpFile("../../Web/minmax.js")), false, true);
+
+
+
+
+            assembler.add("ss", new mpFunctionalGETableToken((rq) => {
+                string htmlRes = "";
+
+                var res = db.query("SELECT date, value FROM weight WHERE userid = '" + lman.checkRequest(rq).userid + "'");
+                double min = res["value"].Select(data => data.asDouble()).Min();
+                double max = res["value"].Select(data => data.asDouble()).Max();
+
+                htmlRes += "<div class='mpContentContainer'>" +
+                            "< div style = 'background-color: burlywood; display: flex; flex-direction: row; align-items: stretch; width: 100%; height: 10vw;' >" +
+                                    "< div id = 'min' style = 'text-align: center; line-height: 10vw; width: 100%; font-size: 72pt;' > " + min + " </ div >" +
+                                    "< div id = 'max' style = 'text-align: center; line-height: 10vw; width: 100%; font-size: 72pt;' > " + max + " </ div >" +
+                                "</ div >" +
+                            "</ div > ";
+
+                return new mpResponse(new binaryData(htmlRes, binaryDataType.html), 200);
+            }), false, false);
+
+
+
 
             mpPageAssembler ass = new mpPageAssembler(new mpFile("../../Web/loginEngine.html"), new mpFile(new binaryData("", binaryDataType.css)));
             ass.add("loginItem", new mpFile(new binaryData("document.cookie = \"Authorization=user:pass\";")));
