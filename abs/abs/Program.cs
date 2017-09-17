@@ -98,7 +98,7 @@ namespace abs {
                     return new mpArray();
                 }
             });
-            mpBase.addProperty("login", lman);
+            mpBase.addProperty("login", lman);//
 
 
 

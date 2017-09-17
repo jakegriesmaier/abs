@@ -133,7 +133,7 @@ namespace abs {
 
         public void setEquipmentRequired() {
             this.equipmentRequired = db.query("SELECT equipmentrequired FROM allknownexercises WHERE exercise = '" + exerciseName + "' AND mainbodypart ='" + mainBodyPart + "'").ToString();
-        }
+        }//
 
         public void setEquipmentRequired2() {
             this.equipmentRequired2 = db.query("SELECT equipmentrequired2 FROM allknownexercises WHERE exercise = '" + exerciseName + "' AND mainbodypart ='" + mainBodyPart + "'").ToString();
