@@ -25,7 +25,7 @@ namespace abs {
         }
 
         public static string md5(byte[] data) {
-            MD5 md5 = MD5.Create();
+            MD5 md5 = MD5.Create();//
             byte[] bytes = md5.ComputeHash(data);
             return bytes[0].ToString("X2") + bytes[1].ToString("X2") + bytes[2].ToString("X2") + bytes[3].ToString("X2");
         }
