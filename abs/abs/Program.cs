@@ -113,6 +113,7 @@ namespace abs {
                 new mpFile("../../Web/Templates/Template.css")
             );
 
+            assembler.js.debugMode = true;
 
 
             assembler.add("header", new mpFile("../../Web/Header.html"), true, false);
