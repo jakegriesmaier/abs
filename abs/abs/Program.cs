@@ -125,7 +125,7 @@ namespace abs {
 
 
 
-            assembler.add("minmax", new mpPageElement(new mpFile("../../Web/minmax.html"), new mpFile("../../Web/minmax.js")), false, true);
+            //assembler.add("minmax", new mpPageElement(new mpFile("../../Web/minmax.html"), new mpFile("../../Web/minmax.js")), false, true);
 
 
 
@@ -134,19 +134,25 @@ namespace abs {
                 string htmlRes = "";
 
                 var res = db.query("SELECT date, value FROM weight WHERE userid = '" + lman.checkRequest(rq).userid + "'");
-                double min = res["value"].Select(data => double.Parse(data.asString())).Min();
-                double max = res["value"].Select(data => double.Parse(data.asString())).Max();
-                    
+                List<binaryData> list = res["value"];
+                double min = 0;
+                double max = 0;
+                if (list != null && list.Count > 0) {
+                    min = res["value"].Select(data => double.Parse(data.asString())).Min();
+                    max = res["value"].Select(data => double.Parse(data.asString())).Max();
+                }
+
+                Console.WriteLine("id:" + lman.checkRequest(rq).userid);
 
                 htmlRes += "<div class='mpContentContainer'>" +
-                            "< div style = 'background-color: burlywood; display: flex; flex-direction: row; align-items: stretch; width: 100%; height: 10vw;' >" +
-                                    "< div id = 'min' style = 'text-align: center; line-height: 10vw; width: 100%; font-size: 72pt;' > " + min + " </ div >" +
-                                    "< div id = 'max' style = 'text-align: center; line-height: 10vw; width: 100%; font-size: 72pt;' > " + max + " </ div >" +
-                                "</ div >" +
-                            "</ div > ";
+                            "<div style = 'background-color: burlywood; display: flex; flex-direction: row; align-items: stretch; width: 100%; height: 10vw;'>" +
+                                    "<div id = 'min' style = 'text-align: center; line-height: 10vw; width: 100%; font-size: 72pt;' > " + min + " </div>" +
+                                    "<div id = 'max' style = 'text-align: center; line-height: 10vw; width: 100%; font-size: 72pt;' > " + max + " </div>" +
+                                "</div>" +
+                            "</div> ";
 
                 return new mpResponse(new binaryData(htmlRes, binaryDataType.html), 200);
-            }), false, false);
+            }), false, true);
 
 
 
