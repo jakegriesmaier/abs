@@ -10,6 +10,11 @@
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
+#specifically these folders in case they don't get got anywhere else
+abs/abs/bin
+abs/abs/obj
+abs/.vs
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
