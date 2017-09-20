@@ -1,4 +1,5 @@
 ﻿using monopage;
+using System.Collections.Generic;
 
 namespace abs {
     public class Exercise {
@@ -15,6 +16,18 @@ namespace abs {
             setIsDoubleExercise();
         }
 
+        private Exercise(string ExerciseName, string mainBodypart, bool isCompound, int areaNumber, bool requiresWeight, string equipmentRequired, string equipmentRequired2, string weightrequired, bool isDoubleExercise) {
+            this.exerciseName = exerciseName;
+            this.mainBodyPart = mainBodyPart;
+            this.isCompound = isCompound;
+            this.areaNumber = areaNumber;
+            this.requiresWeight = requiresWeight;
+            this.equipmentRequired = equipmentRequired;
+            this.equipmentRequired = equipmentRequired2;
+            this.weightRequired = weightRequired;
+            this.isDoubleExercise = isDoubleExercise;
+        }
+
 
         private Database db;//TODO adjust this class so that it has the correct data fields and make the getters retrieve the information from the database
                             //TODO(make any getters that are user specific for createplan to take the userID as a parameter)
@@ -23,7 +36,7 @@ namespace abs {
                             //TODO the exercise is created based on the exercises name which is retried from the database elsewhere when the plan is being created
 
         public string exerciseName;
-        private string mainBodyPart;
+        public string mainBodyPart { get; private set; }
         public string specifiedArea {
             get {
                 if (mainBodyPart == "Chest") {
@@ -56,8 +69,6 @@ namespace abs {
                     else if (areaNumber == 2) return "Lower Abs";
                     else return "Obliques";
                 }
-                
-                
             }
         }
         public bool isCompound;
@@ -67,6 +78,15 @@ namespace abs {
         public string equipmentRequired2;
         public string weightRequired;
         public bool isDoubleExercise;
+
+        public static HashSet<Exercise> getAllExercises(Database db) {
+            //TODO: load all exercises with a single query
+        }
+
+        public static HashSet<Exercise> getAllAvaiableExercises(HashSet<Exercise> exercises, HashSet<string> equipmentAvailable) {
+            
+            db.query()
+        }
 
         public string getExerciseName() {
             return this.exerciseName;

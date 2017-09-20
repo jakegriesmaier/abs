@@ -8,168 +8,228 @@ using System.Linq;
 namespace abs {
     //experience level, gender, workout length, workout times per week, goal
 
+    public enum biologicalGender {
+        male,
+        female,
+        other
+    }
 
-    public abstract class MuscleGroup {
-        public int totalExercises;
-        public int numSubgroup1Exercises;
-        public int numSubgroup2Exercises;
-        public int numSubgroup3Exercises;
+    public struct muscleGroup {
+        public string mainBodyPart;
+        public int subGroup;
 
-        public MuscleGroup(string muscle) {
-            this.totalExercises = 0;
-            this.numSubgroup1Exercises = 0;
-            this.numSubgroup2Exercises = 0;
-            this.numSubgroup3Exercises = 0;
-        }
-
-        public void addExercise() {
-            this.totalExercises++;
-        }
-
-        public void removeExercise() {
-            this.totalExercises--;
-        }
-
-        public void addToSubgroup1() {
-            this.numSubgroup1Exercises++;
-        }
-
-        public void removeFromSubgroup1() {
-            this.numSubgroup1Exercises--;
-            removeExercise();
-        }
-
-        public void addToSubgroup2() {
-            this.numSubgroup2Exercises++;
-        }
-
-        public void removeFromSubgroup2() {
-            this.numSubgroup2Exercises--;
-            removeExercise();
-        }
-
-        public void addToSubgroup3() {
-            this.numSubgroup3Exercises++;
-        }
-
-        public void removeFromSubgrou31() {
-            this.numSubgroup3Exercises--;
-            removeExercise();
-        }
-
-        public void calculatesubgroups() {
-            int temp = totalExercises;
-            while (temp != 0) {
-                if (temp > 0) {
-                    addToSubgroup1();
-                    temp--;
-                }
-                if (temp > 0) {
-                    addToSubgroup2();
-                    temp--;
-                }
-                if (temp > 0) {
-                    addToSubgroup3();
-                    temp--;
+        public string subgroup {
+            get {
+                if (mainBodyPart == "Chest") {
+                    if (subGroup == 1) return "Middle Chest";
+                    else if (subGroup == 2) return "Upper Chest";
+                    else return "Lower Chest";
+                } else if (mainBodyPart == "Legs") {
+                    if (subGroup == 1) return "Quads";
+                    else if (subGroup == 2) return "Hamstrings";
+                    else return "Calves";
+                } else if (mainBodyPart == "Back") {
+                    if (subGroup == 1) return "Upper Back";
+                    else if (subGroup == 2) return "Lats";
+                    else return "Lower Back";
+                } else if (mainBodyPart == "Shoulders") {
+                    if (subGroup == 1) return "Front Deltiods";
+                    else if (subGroup == 2) return "Lateral Deltoids";
+                    else return "Rear Deltoids/Traps";
+                } else if (mainBodyPart == "Arms") {
+                    if (subGroup == 1) return "Biceps";
+                    else if (subGroup == 2) return "Triceps";
+                    else return "Forearms";
+                } else {
+                    if (subGroup == 1) return "Upper Abs";
+                    else if (subGroup == 2) return "Lower Abs";
+                    else return "Obliques";
                 }
             }
         }
 
+        public string readable() {
+            return mainBodyPart + " - " + subgroup;
+        }
+    }
+    public struct set {
+        public readonly int reps;
+        public readonly int percent1RM;
+        public readonly TimeSpan restTime;
+        public readonly setFeedback feedback;
+    }
+    public struct setFeedback {
+        //tier 0 feedback
+        public readonly bool completed;
+
+        //tier 1 feedback
+        public readonly int difficulty;
+
+        //tier 2 feedback
+        public readonly int reps;
+        public readonly int weight;
+    }
+    public struct workoutItem {
+        public string uuid;
+        public Exercise ex;
+        public set[] sets;
+
+        public string readable(int user1RM) {
+            StringBuilder res = new StringBuilder();
+
+            for(int i = 0; i < sets.Count(); i++) {
+                set s = sets[i];
+
+                string exDef = ex.exerciseName + " " + Util.percent1RM(s.percent1RM, user1RM) + "lb for " + s.reps + " " + (s.reps == 1 ? "rep" : "reps") + "\n";
+                string restDef = (s.restTime.TotalSeconds < 0) ? "Immediately " : "Rest " + s.restTime.TotalSeconds + " seconds\n";
+
+                res.Append(exDef);
+                if(i != sets.Count() - 1) res.Append(restDef);
+            }
+
+            return res.ToString();
+        }
     }
 
 
+    public class MuscleGroupQueue {
+        public readonly string mainBodyPart;
+
+        public readonly double scalingFactor;
+        public double timePutIn => totalExercises / scalingFactor;
+        public int totalExercises {
+            get {
+                return groups.Aggregate((accumulator, initial) => accumulator + initial);
+            }
+        }
+        public int[] groups = new int[3] { 0, 0, 0 };
+
+        private void addToSubgroup(int group) {
+            groups[group]++;
+        }
+        private void removeFromGroup(int group) {
+            groups[group]--;
+        }
+
+        public muscleGroup generateGroupExercise() {
+            int subgroup = groups[0] > groups[1] ? (groups[1] > groups[2] ? 2 : 1) : 0;
+            addToSubgroup(subgroup);
+            return new muscleGroup { mainBodyPart = mainBodyPart, subGroup = subgroup };
+        }
+        public void undoGroupExercise(muscleGroup group) {
+            removeFromGroup(group.subGroup);
+        }
+
+        public MuscleGroupQueue(string mainBodyPart, double factor) {
+            scalingFactor = factor;
+            this.mainBodyPart = mainBodyPart;
+        }
+    }
+
+    public struct planDefinition {
+        public int age;
+        public biologicalGender gender;
+        public int experience;
+        public int[] workoutTimes;
+        public string[] equipmentAvailable;
+        public string goal;
+    }
+
     //TODO finish
     public class Plan {
-        private static string[] equipmentAvailable = { "Bench", "Dumbbells" };//should be user input
-        private static string[] equipmentAvailable2 = { "Bench", "Dumbbells" };//should be user input
-        private static string[] weights = { "Bench", "Dumbbells" };//should be user input
-        private int experienceLevel;
-        private bool gender;//male = true;
-        public int workoutLength;//30, 45, 60, 75, 90, 105, 120 (minutes)
-        public int workoutsPerWeek;//2,3,4,5, or 6
-        public int goal;//1=gain muscle, 2=lose fat, 3=maintain weight
-        public int totalNumExercises;
-        public int totalMinutes;
-        public int numExercisesPerMainMuscleGroup;
-        public int numExercisesPerSubgroup1;//number of exercises per subgroup per main bodypart for subgroup 1
-        public int numExercisesPerSubgroup2;//number of exercises per subgroup per main bodypart for subgroup 2
-        public int numExercisesPerSubgroup3;//number of exercises per subgroup per main bodypart for subgroup 3
-        public MuscleGroup chest;
-        public MuscleGroup back;
-        public MuscleGroup legs;
-        public MuscleGroup shoulders;
-        public MuscleGroup arms;
-        public MuscleGroup abs;
+        public planDefinition definition;
+
+        public Dictionary<string, MuscleGroupQueue> groups;
+        public MuscleGroupQueue chest => groups["chest"];
+        public MuscleGroupQueue back => groups["back"];
+        public MuscleGroupQueue legs => groups["legs"];
+        public MuscleGroupQueue shoulders => groups["shoulders"];
+        public MuscleGroupQueue arms => groups["arms"];
+        public MuscleGroupQueue abs => groups["abs"];
 
         UsersPossibleExerciseList exercises = new UsersPossibleExerciseList();
         List<Exercise> myExercises = new List<Exercise>();
 
-        public Plan(int experienceLevel, bool gender, int workoutLength, int workoutsPerWeek, int goal) {
-            //exercises.sortExercisesByEquipment(equipmentAvailable, equipmentAvailable2, weights);
-            //myExercises = exercises.getExercises();
-            this.experienceLevel = experienceLevel;
-            this.gender = gender;
-            this.workoutLength = workoutLength;
-            this.workoutsPerWeek = workoutsPerWeek;
-            this.goal = goal;
-        }
 
         //selects the style of workout for the plan 
         public string selectStyle(int experienceLevel) {
             throw new NotImplementedException();
         }
 
-        public void setNumExercisesPerMainGroup() {
-            totalMinutes = workoutLength * workoutsPerWeek;
-            totalNumExercises = totalMinutes / 15;
-            int temp = totalNumExercises;
-            while(temp != 0) {
-                if(temp > 0) {
-                    chest.addExercise();
-                    temp--;
-                }
-                if (temp > 0) {
-                    back.addExercise();
-                    temp--;
-                }
-                if (temp > 0) {
-                    legs.addExercise();
-                    temp--;
-                }
-                if (temp > 0) {
-                    shoulders.addExercise();
-                    temp--;
-                }
-                if (temp > 0) {
-                    arms.addExercise();
-                    temp--;
-                }
-                if (temp > 0) {
-                    abs.addExercise();
-                    temp--;
-                }
-            }
-        }
-
-
-        public void calculateNumExercisesPerSubgroup() {
-            chest.calculatesubgroups();
-            back.calculatesubgroups();
-            legs.calculatesubgroups();
-            shoulders.calculatesubgroups();
-            arms.calculatesubgroups();
-            abs.calculatesubgroups();
-        }
-            
-
         //selects what days bodyparts will be worked out
         public string selectSplit(int workoutsPerWeek) {
             throw new NotImplementedException();
         }
 
+        List<List<workoutItem>> pastDays;
+        List<workoutItem> previousDay {
+            get {
+                if (pastDays.Count > 0)
+                    return pastDays.Last();
+                else
+                    return new List<workoutItem>();
+            }
+        }
+
+        string getNextGroup(HashSet<string> excludedGroups) {
+            //find the lowest timePutIn of any non-excluded groups
+            if (excludedGroups.Count() > 5) throw new Exception();
+            double lowest = double.MaxValue;
+            string lowestGroup = "";
+            foreach(var kvp in groups) {
+                MuscleGroupQueue g = kvp.Value;
+                if(!excludedGroups.Contains(g.mainBodyPart) && g.timePutIn < lowest) {
+                    lowest = g.timePutIn;
+                    lowestGroup = g.mainBodyPart;
+                }
+            }
+            
+            return lowestGroup;
+        }
+
+        public List<workoutItem> generateDay(int n) {
+            //determine the amount of primary and secondary exercises to do
+            int primaryCount = (int)(Math.Ceiling(n * 0.666666666) + 0.5);
+            int secondaryCount = n - primaryCount;
 
 
+            HashSet<string> excludedGroups = new HashSet<string>();
+            foreach(workoutItem item in previousDay) {
+                excludedGroups.Add(item.uuid);
+            }
 
+            List<workoutItem> res = new List<workoutItem>();
+
+            string primary = getNextGroup(excludedGroups);
+            excludedGroups.Add(primary);
+            for(int i = 0; i < primaryCount; i++) {
+                muscleGroup group = groups[primary].generateGroupExercise();
+                res.Add(new workoutItem { uuid = primary }); //TODO: place real exercises
+            }
+
+            string secondary = getNextGroup(excludedGroups);
+            for (int i = 0; i < secondaryCount; i++) {
+                muscleGroup group = groups[secondary].generateGroupExercise();
+                res.Add(new workoutItem { uuid = secondary }); //TODO: place real exercises
+            }
+
+            pastDays.Add(res);
+
+            return res;
+        }
+
+        public Plan(planDefinition definition) {
+            this.definition = definition;
+            this.pastDays = new List<List<workoutItem>>();
+
+            groups = new Dictionary<string, MuscleGroupQueue>();
+            groups.Add("chest", new MuscleGroupQueue("chest", 1.0));
+            groups.Add("back", new MuscleGroupQueue("back", 1.0));
+            groups.Add("legs", new MuscleGroupQueue("legs", 1.0));
+            groups.Add("shoulders", new MuscleGroupQueue("shoulders", 0.8));
+            groups.Add("arms", new MuscleGroupQueue("arms", 0.8));
+            groups.Add("abs", new MuscleGroupQueue("abs", 0.8));
+        }
     }
 
 
