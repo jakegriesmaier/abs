@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Linq;
+using monopage;
 
 namespace abs {
     //experience level, gender, workout length, workout times per week, goal
@@ -137,6 +137,8 @@ namespace abs {
 
     //TODO finish
     public class Plan {
+        public HashSet<Exercise> allExercises;
+
         public planDefinition definition;
 
         public Dictionary<string, MuscleGroupQueue> groups;
@@ -199,18 +201,29 @@ namespace abs {
             }
 
             List<workoutItem> res = new List<workoutItem>();
-
+            
             string primary = getNextGroup(excludedGroups);
             excludedGroups.Add(primary);
-            for(int i = 0; i < primaryCount; i++) {
-                muscleGroup group = groups[primary].generateGroupExercise();
-                res.Add(new workoutItem { uuid = primary }); //TODO: place real exercises
-            }
+            int areaNumber = 1;
+            HashSet<Exercise> allEx = allExercises;
 
+
+            HashSet<Exercise> onlyCompounds = Exercise.onlycompound(allExercises);
+            HashSet<Exercise> onlyCompoundsInSubgroup = Exercise.onlyCompoundsInSubgroup(allExercises, areaNumber);
+            HashSet<Exercise> subgroup = Exercise.subgroup(allExercises, areaNumber);
+
+
+            HashSet<Exercise> primaryAvailable = Exercise.whereAreaIs(allExercises, primary);
+            for (int i = 0; i < primaryCount; i++) {
+                muscleGroup group = groups[primary].generateGroupExercise();
+                res.Add(new workoutItem { uuid = primary, ex = primaryAvailable.randomElement() }); //TODO: place real exercises
+            }
+            
             string secondary = getNextGroup(excludedGroups);
+            HashSet<Exercise> secondaryAvailable = Exercise.whereAreaIs(allExercises, secondary);
             for (int i = 0; i < secondaryCount; i++) {
                 muscleGroup group = groups[secondary].generateGroupExercise();
-                res.Add(new workoutItem { uuid = secondary }); //TODO: place real exercises
+                res.Add(new workoutItem { uuid = secondary, ex = secondaryAvailable.randomElement()}); //TODO: place real exercises
             }
 
             pastDays.Add(res);
@@ -218,7 +231,7 @@ namespace abs {
             return res;
         }
 
-        public Plan(planDefinition definition) {
+        public Plan(planDefinition definition, Database db) {
             this.definition = definition;
             this.pastDays = new List<List<workoutItem>>();
 
@@ -228,7 +241,9 @@ namespace abs {
             groups.Add("legs", new MuscleGroupQueue("legs", 1.0));
             groups.Add("shoulders", new MuscleGroupQueue("shoulders", 0.8));
             groups.Add("arms", new MuscleGroupQueue("arms", 0.8));
-            groups.Add("abs", new MuscleGroupQueue("abs", 0.8));
+            groups.Add("abdominals", new MuscleGroupQueue("abdominals", 0.8));
+
+            allExercises = Exercise.getAllExercises(db);
         }
     }
 

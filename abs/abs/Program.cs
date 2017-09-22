@@ -37,47 +37,24 @@ namespace abs {
 
     class Program {
         static void Main(string[] args) {
+            Database db = new Database("Server=localhost;Port=5432;Username=postgres;Password=admin;Database=postgres");
+
+
+
             planDefinition def = new planDefinition();
-            Plan p = new Plan(def);
-
-            Dictionary<string, int> groupCounts = new Dictionary<string, int>();
-            groupCounts.Add("chest", 0);
-            groupCounts.Add("back", 0);
-            groupCounts.Add("legs", 0);
-            groupCounts.Add("shoulders", 0);
-            groupCounts.Add("arms", 0);
-            groupCounts.Add("abs", 0);
-
+            Plan p = new Plan(def, db);
+            
             for (int i = 0; i < 50; i++) {
-                List<workoutItem> day = p.generateDay(6);
-                foreach(var item in day) {
-                    groupCounts[item.uuid]++;
-                    Console.Write(item.uuid + ", ");
+                List<workoutItem> day = p.generateDay(10);
+                Console.WriteLine(day.First().uuid + ", " + day.Last().uuid);
+                foreach (var item in day) {
+                    Console.Write(item.ex.exerciseName + ", ");
                 }
+                Console.WriteLine();
                 Console.WriteLine();
             }
 
-            Console.WriteLine();
 
-            foreach(var kvp in groupCounts) {
-                Console.WriteLine(kvp.Key + ", " + kvp.Value);
-            }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            Database db = new Database("Server=localhost;Port=5432;Username=postgres;Password=admin;Database=postgres");
 
             //refresh users table
             db.deleteTableIfExists("users");

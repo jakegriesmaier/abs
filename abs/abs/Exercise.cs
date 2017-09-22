@@ -1,5 +1,6 @@
 ﻿using monopage;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace abs {
     public class Exercise {
@@ -17,14 +18,14 @@ namespace abs {
         }
 
         private Exercise(string ExerciseName, string mainBodypart, bool isCompound, int areaNumber, bool requiresWeight, string equipmentRequired, string equipmentRequired2, string weightrequired, bool isDoubleExercise) {
-            this.exerciseName = exerciseName;
-            this.mainBodyPart = mainBodyPart;
+            this.exerciseName = ExerciseName;
+            this.mainBodyPart = mainBodypart;
             this.isCompound = isCompound;
             this.areaNumber = areaNumber;
             this.requiresWeight = requiresWeight;
             this.equipmentRequired = equipmentRequired;
             this.equipmentRequired = equipmentRequired2;
-            this.weightRequired = weightRequired;
+            this.weightRequired = weightrequired;
             this.isDoubleExercise = isDoubleExercise;
         }
 
@@ -80,12 +81,73 @@ namespace abs {
         public bool isDoubleExercise;
 
         public static HashSet<Exercise> getAllExercises(Database db) {
+            var exercises = db.query("select * from allknownexercises");
+            List<binaryData> exercise = exercises["exercise"];
+            List<binaryData> mainbodypart = exercises["mainbodypart"];
+            List<binaryData> iscompound = exercises["iscompound"];
+            List<binaryData> areanumber = exercises["areanumber"];
+            List<binaryData> requiresweight = exercises["requiresweight"];
+            List<binaryData> equipmentrequired = exercises["equipmentrequired"];
+            List<binaryData> equipmentrequired2 = exercises["equipmentrequired2"];
+            List<binaryData> weightrequired = exercises["weightrequired"];
+            List<binaryData> isdoubleexercise = exercises["isdoubleexercise"];
+
+            HashSet<Exercise> res = new HashSet<Exercise>();
+
+            for(int i = 0; i < exercise.Count; i++) {
+                res.Add(new Exercise(
+                    exercise[i].asString(),
+                    mainbodypart[i].asString(),
+                    iscompound[i].asBool(),
+                    areanumber[i].asInt(),
+                    requiresweight[i].asBool(),
+                    equipmentrequired[i].asString(),
+                    equipmentrequired2[i].asString(),
+                    weightrequired[i].asString(),
+                    isdoubleexercise[i].asBool()
+                ));
+            }
+
             //TODO: load all exercises with a single query
+            return res;
         }
 
-        public static HashSet<Exercise> getAllAvaiableExercises(HashSet<Exercise> exercises, HashSet<string> equipmentAvailable) {
-            
-            db.query()
+        public static HashSet<Exercise> availableWithEquipment(HashSet<Exercise> exercises, HashSet<string> equipmentAvailable) {
+            HashSet<Exercise> res = new HashSet<Exercise>();
+            foreach(Exercise ex in exercises) {
+                if(equipmentAvailable.Contains(ex.equipmentRequired)) {
+                    res.Add(ex);
+                }
+            }
+
+            return res;
+        }
+
+        public static HashSet<Exercise> whereAreaIs(HashSet<Exercise> exercises, string mainbodypart) {
+            HashSet<Exercise> res = new HashSet<Exercise>();
+            foreach (Exercise ex in exercises) {
+                if (string.Compare(ex.mainBodyPart, mainbodypart, true) == 0) {
+                    res.Add(ex);
+                }
+            }
+
+            return res;
+        }
+
+        public static HashSet<Exercise> onlycompound(HashSet<Exercise> exercises) {
+            return new HashSet<Exercise>(exercises.Where(e => e.isCompound));
+        }
+
+        public static HashSet<Exercise> subgroup(HashSet<Exercise> exercises, int subgroup) {
+            return new HashSet<Exercise>(exercises.Where(e => (e.areaNumber == subgroup)));
+        }
+
+        public static HashSet<Exercise> onlyCompoundsInSubgroup (HashSet<Exercise> exercises, int subGroup) {
+            return new HashSet<Exercise>(exercises.Where(e => (e.areaNumber == subGroup && e.isCompound)));
+        }
+
+        public static HashSet<Exercise> getUnusedExercises (HashSet<Exercise> allAvailableExercises, HashSet<Exercise> usedExercises) {
+            return new HashSet<Exercise>(allAvailableExercises.Where(e => !(usedExercises.Select(ex => ex.getExerciseName()).Contains(e.getExerciseName()))));
         }
 
         public string getExerciseName() {
