@@ -205,7 +205,6 @@ namespace abs {
             
             string primary = getNextGroup(excludedGroups);
             excludedGroups.Add(primary);
-            int areaNumber = 1;
             HashSet<Exercise> allEx = allExercises;
 
 

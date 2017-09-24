@@ -112,6 +112,16 @@ namespace abs {
             return res;
         }
 
+        public static HashSet<Exercise> availableWithEquipment(HashSet<Exercise> exercises, HashSet<string> equipmentAvailable, HashSet<string> equipmentAvailable2, HashSet<string> weightRequired) {
+            HashSet<Exercise> res = new HashSet<Exercise>();
+            foreach (Exercise ex in exercises) {
+                if (equipmentAvailable.Contains(ex.equipmentRequired) && equipmentAvailable2.Contains(ex.equipmentRequired2) && weightRequired.Contains(ex.weightRequired)) {
+                    res.Add(ex);
+                }
+            }
+            return res;
+        }
+
         public static HashSet<Exercise> availableWithEquipment(HashSet<Exercise> exercises, HashSet<string> equipmentAvailable) {
             HashSet<Exercise> res = new HashSet<Exercise>();
             foreach(Exercise ex in exercises) {
