@@ -201,6 +201,7 @@ namespace abs {
             }
 
             List<workoutItem> res = new List<workoutItem>();
+            HashSet<Exercise> usedExercises = new HashSet<Exercise>();
             
             string primary = getNextGroup(excludedGroups);
             excludedGroups.Add(primary);
@@ -208,23 +209,154 @@ namespace abs {
             HashSet<Exercise> allEx = allExercises;
 
 
-            HashSet<Exercise> onlyCompounds = Exercise.onlycompound(allExercises);
-            HashSet<Exercise> onlyCompoundsInSubgroup = Exercise.onlyCompoundsInSubgroup(allExercises, areaNumber);
-            HashSet<Exercise> subgroup = Exercise.subgroup(allExercises, areaNumber);
 
+            HashSet<Exercise> primaryExercises = Exercise.whereAreaIs(allExercises, primary);
+            HashSet<Exercise> primarySubgroupOneExercises = Exercise.subgroup(primaryExercises, 1);
+            HashSet<Exercise> primarySubgroupTwoExercises = Exercise.subgroup(primaryExercises, 2);
+            HashSet<Exercise> primarySubgroupThreeExercises = Exercise.subgroup(primaryExercises, 3);
+            HashSet<Exercise> primarySubgroupOneCompoundExercises = Exercise.onlycompound(primarySubgroupOneExercises);
+            HashSet<Exercise> primarySubgroupTwoCompoundExercises = Exercise.onlycompound(primarySubgroupTwoExercises);
+            HashSet<Exercise> primarySubgroupThreeCompoundExercises = Exercise.onlycompound(primarySubgroupThreeExercises);
 
-            HashSet<Exercise> primaryAvailable = Exercise.whereAreaIs(allExercises, primary);
-            for (int i = 0; i < primaryCount; i++) {
+            bool containsCompound1 = false;
+            bool containsCompound2 = false;
+            bool containsCompound3 = false;
+            int turn = 1;
+
+            for(int i = 0; i < primaryCount; i++) {
                 muscleGroup group = groups[primary].generateGroupExercise();
-                res.Add(new workoutItem { uuid = primary, ex = primaryAvailable.randomElement() }); //TODO: place real exercises
+                if (primarySubgroupOneExercises.Count != 0 && turn == 1  || (primarySubgroupTwoExercises.Count == 0 || primarySubgroupThreeExercises.Count == 0)) {
+                    if (containsCompound1 == false && primarySubgroupOneCompoundExercises.Count != 0) {
+                        usedExercises.Add(primarySubgroupOneCompoundExercises.randomElement());
+                        res.Add(new workoutItem { uuid = primary, ex = usedExercises.Last() });
+                        primarySubgroupOneCompoundExercises = Exercise.getUnusedExercises(primarySubgroupOneCompoundExercises, usedExercises);
+                        primarySubgroupOneExercises = Exercise.getUnusedExercises(primarySubgroupOneExercises, usedExercises);
+                        containsCompound1 = true;
+                        turn=2;
+                    } else {
+                        usedExercises.Add(primarySubgroupOneExercises.randomElement());
+                        res.Add(new workoutItem { uuid = primary, ex = usedExercises.Last() });
+                        primarySubgroupOneCompoundExercises = Exercise.getUnusedExercises(primarySubgroupOneCompoundExercises, usedExercises);
+                        primarySubgroupOneExercises = Exercise.getUnusedExercises(primarySubgroupOneExercises, usedExercises);
+                        turn=2;
+                    }
+                }
+                else if(primarySubgroupTwoExercises.Count != 0 && turn == 2 || (primarySubgroupOneExercises.Count == 0 || primarySubgroupThreeExercises.Count == 0)) {
+                    if (containsCompound2 == false && primarySubgroupTwoCompoundExercises.Count != 0) {
+                        usedExercises.Add(primarySubgroupTwoCompoundExercises.randomElement());
+                        res.Add(new workoutItem { uuid = primary, ex = usedExercises.Last() });
+                        primarySubgroupTwoCompoundExercises = Exercise.getUnusedExercises(primarySubgroupTwoCompoundExercises, usedExercises);
+                        primarySubgroupTwoExercises = Exercise.getUnusedExercises(primarySubgroupTwoExercises, usedExercises);
+                        containsCompound2 = true;
+                        turn=3;
+                    } else {
+                        usedExercises.Add(primarySubgroupTwoExercises.randomElement());
+                        res.Add(new workoutItem { uuid = primary, ex = usedExercises.Last() });
+                        primarySubgroupTwoCompoundExercises = Exercise.getUnusedExercises(primarySubgroupTwoCompoundExercises, usedExercises);
+                        primarySubgroupTwoExercises = Exercise.getUnusedExercises(primarySubgroupTwoExercises, usedExercises);
+                        turn=3;
+                    }
+                } 
+                else if (primarySubgroupThreeExercises.Count != 0 && turn == 3 || (primarySubgroupTwoExercises.Count == 0 || primarySubgroupOneExercises.Count == 0)) {
+                    if (containsCompound3 == false && primarySubgroupThreeCompoundExercises.Count != 0) {
+                        usedExercises.Add(primarySubgroupThreeCompoundExercises.randomElement());
+                        res.Add(new workoutItem { uuid = primary, ex = usedExercises.Last() });
+                        primarySubgroupThreeCompoundExercises = Exercise.getUnusedExercises(primarySubgroupThreeCompoundExercises, usedExercises);
+                        primarySubgroupThreeExercises = Exercise.getUnusedExercises(primarySubgroupThreeExercises, usedExercises);
+                        containsCompound3 = true;
+                        turn=1;
+                    } else {
+                        usedExercises.Add(primarySubgroupThreeExercises.randomElement());
+                        res.Add(new workoutItem { uuid = primary, ex = usedExercises.Last() });
+                        primarySubgroupThreeCompoundExercises = Exercise.getUnusedExercises(primarySubgroupThreeCompoundExercises, usedExercises);
+                        primarySubgroupThreeExercises = Exercise.getUnusedExercises(primarySubgroupThreeExercises, usedExercises);
+                        turn=1;
+                    }
+                }
             }
-            
+
+            containsCompound1 = false;
+            containsCompound2 = false;
+            containsCompound3 = false;
+
             string secondary = getNextGroup(excludedGroups);
-            HashSet<Exercise> secondaryAvailable = Exercise.whereAreaIs(allExercises, secondary);
+            HashSet<Exercise> secondaryExercises = Exercise.whereAreaIs(allExercises, secondary);
+            HashSet<Exercise> secondarySubgroupOneExercises = Exercise.subgroup(secondaryExercises, 1);
+            HashSet<Exercise> secondarySubgroupTwoExercises = Exercise.subgroup(secondaryExercises, 2);
+            HashSet<Exercise> secondarySubgroupThreeExercises = Exercise.subgroup(secondaryExercises, 3);
+            HashSet<Exercise> secondarySubgroupOneCompoundExercises = Exercise.onlycompound(secondarySubgroupOneExercises);
+            HashSet<Exercise> secondarySubgroupTwoCompoundExercises = Exercise.onlycompound(secondarySubgroupTwoExercises);
+            HashSet<Exercise> secondarySubgroupThreeCompoundExercises = Exercise.onlycompound(secondarySubgroupThreeExercises);
+
+            turn = 1;
             for (int i = 0; i < secondaryCount; i++) {
                 muscleGroup group = groups[secondary].generateGroupExercise();
-                res.Add(new workoutItem { uuid = secondary, ex = secondaryAvailable.randomElement()}); //TODO: place real exercises
+                if (secondarySubgroupOneExercises.Count != 0 && turn == 1 || (secondarySubgroupTwoExercises.Count == 0 || secondarySubgroupThreeExercises.Count == 0)) {
+                    if (containsCompound1 == false && secondarySubgroupOneCompoundExercises.Count != 0) {
+                        usedExercises.Add(secondarySubgroupOneCompoundExercises.randomElement());
+                        res.Add(new workoutItem { uuid = secondary, ex = usedExercises.Last() });
+                        secondarySubgroupOneCompoundExercises = Exercise.getUnusedExercises(secondarySubgroupOneCompoundExercises, usedExercises);
+                        secondarySubgroupOneExercises = Exercise.getUnusedExercises(secondarySubgroupOneExercises, usedExercises);
+                        containsCompound1 = true;
+                        turn = 2;
+                    } else {
+                        usedExercises.Add(secondarySubgroupOneExercises.randomElement());
+                        res.Add(new workoutItem { uuid = secondary, ex = usedExercises.Last() });
+                        secondarySubgroupOneCompoundExercises = Exercise.getUnusedExercises(secondarySubgroupOneCompoundExercises, usedExercises);
+                        secondarySubgroupOneExercises = Exercise.getUnusedExercises(secondarySubgroupOneExercises, usedExercises);
+                        turn = 2;
+                    }
+                } else if (secondarySubgroupTwoExercises.Count != 0 && turn == 2 || (secondarySubgroupOneExercises.Count == 0 || secondarySubgroupThreeExercises.Count == 0)) {
+                    if (containsCompound2 == false && secondarySubgroupTwoCompoundExercises.Count != 0) {
+                        usedExercises.Add(secondarySubgroupTwoCompoundExercises.randomElement());
+                        res.Add(new workoutItem { uuid = secondary, ex = usedExercises.Last() });
+                        secondarySubgroupTwoCompoundExercises = Exercise.getUnusedExercises(secondarySubgroupTwoCompoundExercises, usedExercises);
+                        secondarySubgroupTwoExercises = Exercise.getUnusedExercises(secondarySubgroupTwoExercises, usedExercises);
+                        containsCompound2 = true;
+                        turn = 3;
+                    } else {
+                        usedExercises.Add(secondarySubgroupTwoExercises.randomElement());
+                        res.Add(new workoutItem { uuid = secondary, ex = usedExercises.Last() });
+                        secondarySubgroupTwoCompoundExercises = Exercise.getUnusedExercises(secondarySubgroupTwoCompoundExercises, usedExercises);
+                        secondarySubgroupTwoExercises = Exercise.getUnusedExercises(secondarySubgroupTwoExercises, usedExercises);
+                        turn = 3;
+                    }
+                } else if (secondarySubgroupThreeExercises.Count != 0 && turn == 3 || (secondarySubgroupTwoExercises.Count == 0 || secondarySubgroupOneExercises.Count == 0)) {
+                    if (containsCompound3 == false && secondarySubgroupThreeCompoundExercises.Count != 0) {
+                        usedExercises.Add(secondarySubgroupThreeCompoundExercises.randomElement());
+                        res.Add(new workoutItem { uuid = secondary, ex = usedExercises.Last() });
+                        secondarySubgroupThreeCompoundExercises = Exercise.getUnusedExercises(secondarySubgroupThreeCompoundExercises, usedExercises);
+                        secondarySubgroupThreeExercises = Exercise.getUnusedExercises(secondarySubgroupThreeExercises, usedExercises);
+                        containsCompound3 = true;
+                        turn = 1;
+                    } else {
+                        usedExercises.Add(secondarySubgroupThreeExercises.randomElement());
+                        res.Add(new workoutItem { uuid = secondary, ex = usedExercises.Last() });
+                        secondarySubgroupThreeCompoundExercises = Exercise.getUnusedExercises(secondarySubgroupThreeCompoundExercises, usedExercises);
+                        secondarySubgroupThreeExercises = Exercise.getUnusedExercises(secondarySubgroupThreeExercises, usedExercises);
+                        turn = 1;
+                    }
+                }
             }
+
+
+
+
+
+
+
+            //HashSet<Exercise> primaryAvailable = Exercise.whereAreaIs(allExercises, primary);
+            //for (int i = 0; i < primaryCount; i++) {
+            //    muscleGroup group = groups[primary].generateGroupExercise();
+            //    res.Add(new workoutItem { uuid = primary, ex = primaryAvailable.randomElement() }); //TODO: place real exercises
+            //}
+
+            //string secondary = getNextGroup(excludedGroups);
+            //HashSet<Exercise> secondaryAvailable = Exercise.whereAreaIs(allExercises, secondary);
+            //for (int i = 0; i < secondaryCount; i++) {
+            //    muscleGroup group = groups[secondary].generateGroupExercise();
+            //    res.Add(new workoutItem { uuid = secondary, ex = secondaryAvailable.randomElement()}); //TODO: place real exercises
+            //}
 
             pastDays.Add(res);
 
