@@ -207,9 +207,13 @@ namespace abs {
             excludedGroups.Add(primary);
             HashSet<Exercise> allEx = allExercises;
 
+            //HashSet<string> equipmentAvailable = new HashSet<string>();
+            //HashSet<string> equipmentAvailable2 = new HashSet<string>();
+            //HashSet<string> weightRequired = new HashSet<string>();
 
+            //allEx = Exercise.availableWithEquipment(allEx, equipmentAvailable, equipmentAvailable2, weightRequired);
 
-            HashSet<Exercise> primaryExercises = Exercise.whereAreaIs(allExercises, primary);
+            HashSet<Exercise> primaryExercises = Exercise.whereAreaIs(allEx, primary);
             HashSet<Exercise> primarySubgroupOneExercises = Exercise.subgroup(primaryExercises, 1);
             HashSet<Exercise> primarySubgroupTwoExercises = Exercise.subgroup(primaryExercises, 2);
             HashSet<Exercise> primarySubgroupThreeExercises = Exercise.subgroup(primaryExercises, 3);
