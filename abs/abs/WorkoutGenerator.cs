@@ -189,6 +189,27 @@ namespace abs {
             return lowestGroup;
         }
 
+        //pass in primary or secondary exercise list
+        public List<HashSet<Exercise>> exercisesToUse(HashSet<Exercise> subgroup, HashSet<Exercise> compounds, HashSet<Exercise> usedExercises, List<workoutItem> res, bool containsComp, string pOrS) {
+
+            if (containsComp == false && compounds.Count != 0) {
+                usedExercises.Add(compounds.randomElement());
+                res.Add(new workoutItem { uuid = pOrS, ex = usedExercises.Last() });
+                compounds = Exercise.getUnusedExercises(compounds, usedExercises);
+                subgroup = Exercise.getUnusedExercises(subgroup, usedExercises);
+                containsComp = true;
+            } else {
+                usedExercises.Add(subgroup.randomElement());
+                res.Add(new workoutItem { uuid = pOrS, ex = usedExercises.Last() });
+                compounds = Exercise.getUnusedExercises(compounds, usedExercises);
+                subgroup = Exercise.getUnusedExercises(subgroup, usedExercises);
+            }
+           
+
+            //TOOD need to retun a list of hashsets and a list of a list of workoutItems
+            return new List<HashSet<Exercise>>();//return a list of the used exercises, return res, and return the ones you passed in minus the used exercises
+        }
+
         public List<workoutItem> generateDay(int n) {
             //determine the amount of primary and secondary exercises to do
             int primaryCount = (int)(Math.Ceiling(n * 0.666666666) + 0.5);
