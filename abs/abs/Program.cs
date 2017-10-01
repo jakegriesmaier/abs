@@ -48,7 +48,8 @@ namespace abs {
                 List<workoutItem> day = p.generateDay(10);
                 Console.WriteLine(day.First().uuid + ", " + day.Last().uuid);
                 foreach (var item in day) {
-                    Console.Write(item.ex.exerciseName + ", ");
+                    //Console.WriteLine("\t" + (item.ex.isCompound ? "yes " : "no  ") + item.ex.areaNumber + " " + item.ex.exerciseName);
+                    Console.WriteLine(item.readable(500));
                 }
                 Console.WriteLine();
                 Console.WriteLine();
@@ -171,6 +172,22 @@ namespace abs {
 
                 return new mpResponse(new binaryData(htmlRes, binaryDataType.html), 200);
             }), false, true);
+
+            assembler.add("exerciseViewer", new mpFile("../../Web/exerciseViewer.html"), true, false);
+
+            assembler.add("exercisePanels", new mpFunctionalGETableToken((rq) => {
+                string htmlRes = "";
+                List<workoutItem> items = p.generateDay(8);
+
+                htmlRes += "<div style='border: 1px solid blue; margin: -1px; width: 20em; height: 2em; text-align: center; line-height: 2em;'>" + "Monday - " + items.First().ex.mainBodyPart + " & " + items.Last().ex.mainBodyPart + "</div>";
+
+                foreach (workoutItem item in items) {
+                    htmlRes += item.title(200);
+                    //htmlRes += "<br>";
+                }
+                
+                return new mpResponse(new binaryData(htmlRes, binaryDataType.html), 200);
+            }), false, false);
 
 
 

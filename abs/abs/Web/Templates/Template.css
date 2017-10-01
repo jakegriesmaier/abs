@@ -105,6 +105,7 @@ input[type=text]:focus {
     flex-direction: column;
     background-color: transparent;
     z-index: 0;
+    max-width: 98vw;
 }
 
 .mpFooterContainer {
@@ -126,4 +127,25 @@ input[type=text]:focus {
 .mpContentContainer:hover {
     background-color: #eeeeee;
     box-shadow: 0em 0.25em 0.75em rgba(0, 0, 0, 0.5);
+}
+
+.mpExerciseTitle {
+    padding-left: 1em;
+    margin-bottom: -1px;
+    border-bottom: 1px solid rgba(66, 165, 245, 0.4);
+    width: 19em;
+    height: 2em;
+    color: #242424;
+    line-height: 2em;
+    transition-duration: 0.2s;
+    overflow: hidden;
+    cursor: default;
+}
+
+.mpExerciseTitle:hover {
+    margin-bottom: -3px;
+    border-bottom: 3px solid #2e709b;
+    padding-left: 3em;
+    width: 17em;
+    transition-duration: 0.2s;
 }

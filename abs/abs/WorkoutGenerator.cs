@@ -53,10 +53,10 @@ namespace abs {
         }
     }
     public struct set {
-        public readonly int reps;
-        public readonly int percent1RM;
-        public readonly TimeSpan restTime;
-        public readonly setFeedback feedback;
+        public int reps;
+        public int percent1RM;
+        public TimeSpan restTime;
+        public setFeedback feedback;
     }
     public struct setFeedback {
         //tier 0 feedback
@@ -89,6 +89,29 @@ namespace abs {
 
             return res.ToString();
         }
+
+
+        public string title(int user1RM) {
+            return "<div class='mpExerciseTitle hvr-underline-from-left'>" + ex.exerciseName + "</div>";
+        }
+        public string html(int user1RM) {
+            StringBuilder res = new StringBuilder();
+
+            for (int i = 0; i < sets.Count(); i++) {
+                set s = sets[i];
+
+                string box = "<div style='background-color: red; display: inline-block; width: 10vw; height: 10vh; float: left;'> test </div>";
+
+                string exDef = "<div>" + ex.exerciseName + " " + Util.percent1RM(s.percent1RM, user1RM) + "lb for " + s.reps + " " + (s.reps == 1 ? "rep" : "reps") + "</div><br>";
+                string restDef = "<div>" + ((s.restTime.TotalSeconds < 0) ? "Immediately " : "Rest ") + s.restTime.TotalSeconds + " seconds </div><br>";
+
+                res.Append(box);
+                //res.Append(exDef);
+                //if (i != sets.Count() - 1) res.Append(restDef);
+            }
+
+            return res.ToString();
+        }
     }
 
 
@@ -105,14 +128,20 @@ namespace abs {
         public int[] groups = new int[3] { 0, 0, 0 };
 
         private void addToSubgroup(int group) {
-            groups[group]++;
+            groups[group - 1]++;
         }
         private void removeFromGroup(int group) {
-            groups[group]--;
+            groups[group - 1]--;
+        }
+
+        public void reset() {
+            groups[0] = 0;
+            groups[1] = 0;
+            groups[2] = 0;
         }
 
         public muscleGroup generateGroupExercise() {
-            int subgroup = groups[0] > groups[1] ? (groups[1] > groups[2] ? 2 : 1) : 0;
+            int subgroup = Array.IndexOf(groups, groups.Min()) + 1;
             addToSubgroup(subgroup);
             return new muscleGroup { mainBodyPart = mainBodyPart, subGroup = subgroup };
         }
@@ -190,24 +219,18 @@ namespace abs {
         }
 
         //pass in primary or secondary exercise list
-        public List<HashSet<Exercise>> exercisesToUse(HashSet<Exercise> subgroup, HashSet<Exercise> compounds, HashSet<Exercise> usedExercises, List<workoutItem> res, bool containsComp, string pOrS) {
-
+        public void exercisesToUse(HashSet<Exercise> subgroup, HashSet<Exercise> compounds, HashSet<Exercise> usedExercises, List<workoutItem> res, bool containsComp, string pOrS) {
             if (containsComp == false && compounds.Count != 0) {
                 usedExercises.Add(compounds.randomElement());
                 res.Add(new workoutItem { uuid = pOrS, ex = usedExercises.Last() });
-                compounds = Exercise.getUnusedExercises(compounds, usedExercises);
-                subgroup = Exercise.getUnusedExercises(subgroup, usedExercises);
                 containsComp = true;
             } else {
                 usedExercises.Add(subgroup.randomElement());
                 res.Add(new workoutItem { uuid = pOrS, ex = usedExercises.Last() });
-                compounds = Exercise.getUnusedExercises(compounds, usedExercises);
-                subgroup = Exercise.getUnusedExercises(subgroup, usedExercises);
             }
-           
-
-            //TOOD need to retun a list of hashsets and a list of a list of workoutItems
-            return new List<HashSet<Exercise>>();//return a list of the used exercises, return res, and return the ones you passed in minus the used exercises
+            
+            compounds = Exercise.getUnusedExercises(compounds, usedExercises);
+            subgroup = Exercise.getUnusedExercises(subgroup, usedExercises);
         }
 
         public List<workoutItem> generateDay(int n) {
@@ -226,15 +249,90 @@ namespace abs {
             
             string primary = getNextGroup(excludedGroups);
             excludedGroups.Add(primary);
-            HashSet<Exercise> allEx = allExercises;
+            string secondary = getNextGroup(excludedGroups);
+
+            HashSet<Exercise> available = allExercises;
+
+            //remove exercises that we don't have equipment for
+            //available = Exercise.availableWithEquipment(available, equipmentAvailable, equipmentAvailable2, weightRequired);
+
+            //remove exercises that aren't part of the main area
+            HashSet<Exercise> exercisesInPrimaryGroup = Exercise.whereAreaIs(available, primary);
+            HashSet<Exercise> exercisesInSecondaryGroup = Exercise.whereAreaIs(available, secondary);
+            
+
+            for (int u = 0; u < 2; u++) {
+                bool isSecondary = u != 0;
+                string section = isSecondary ? secondary : primary;
+                int count = isSecondary ? secondaryCount : primaryCount;
+
+                bool[] firstOfSubgroup = new bool[3] { true, true, true };
+
+                HashSet<Exercise> sectionExercies = isSecondary ? exercisesInSecondaryGroup : exercisesInPrimaryGroup;
+
+                for (int i = 0; i < count; i++) {
+                    muscleGroup group = groups[section].generateGroupExercise();
+
+                    HashSet <Exercise> exercisesInCurrentSubgroup = Exercise.subgroup(sectionExercies, group.subGroup);
+
+                    Exercise selectedExercise = null;
+
+                    if (firstOfSubgroup[group.subGroup - 1]) {
+                        firstOfSubgroup[group.subGroup - 1] = false;
+                        HashSet<Exercise> compoundExercisesInCurrentSubgroup = Exercise.onlycompound(exercisesInCurrentSubgroup);
+
+                        if (compoundExercisesInCurrentSubgroup.Count == 0) {
+                            selectedExercise = exercisesInCurrentSubgroup.randomElement();
+                        } else {
+                            selectedExercise = compoundExercisesInCurrentSubgroup.randomElement();
+                        }
+                    } else {
+                        selectedExercise = exercisesInCurrentSubgroup.randomElement();
+                    }
+
+                    sectionExercies.Remove(selectedExercise);
+
+
+                    res.Add(new workoutItem {
+                        uuid = section,
+                        ex = selectedExercise,
+                        sets = new set[] {
+                            new set {
+                                reps = 10,
+                                percent1RM = 70,
+                                restTime = new TimeSpan(0, 0, 60)
+                            },
+                            new set {
+                                reps = 12,
+                                percent1RM = 70,
+                                restTime = new TimeSpan(0, 0, -1)
+                            },
+                            new set {
+                                reps = 15,
+                                percent1RM = 70,
+                                restTime = new TimeSpan(0, 0, 30)
+                            }
+                        }
+                    });
+                }
+            }
+
+
+
+
+
+
+
+
+
 
             //HashSet<string> equipmentAvailable = new HashSet<string>();
             //HashSet<string> equipmentAvailable2 = new HashSet<string>();
             //HashSet<string> weightRequired = new HashSet<string>();
 
-            //allEx = Exercise.availableWithEquipment(allEx, equipmentAvailable, equipmentAvailable2, weightRequired);
 
-            HashSet<Exercise> primaryExercises = Exercise.whereAreaIs(allEx, primary);
+            /*
+            HashSet<Exercise> primaryExercises = Exercise.whereAreaIs(allExercises, primary);
             HashSet<Exercise> primarySubgroupOneExercises = Exercise.subgroup(primaryExercises, 1);
             HashSet<Exercise> primarySubgroupTwoExercises = Exercise.subgroup(primaryExercises, 2);
             HashSet<Exercise> primarySubgroupThreeExercises = Exercise.subgroup(primaryExercises, 3);
@@ -362,7 +460,7 @@ namespace abs {
                     }
                 }
             }
-
+            */
 
 
 
@@ -438,5 +536,6 @@ namespace abs {
             return Exercises;
         }
     }
+
 
 }
