@@ -129,23 +129,60 @@ input[type=text]:focus {
     box-shadow: 0em 0.25em 0.75em rgba(0, 0, 0, 0.5);
 }
 
-.mpExerciseTitle {
-    padding-left: 1em;
+.mpExerciseTitle, .mpExerciseTitleSelected, .mpExerciseTitleDone {
     margin-bottom: -1px;
     border-bottom: 1px solid rgba(66, 165, 245, 0.4);
-    width: 19em;
+    width: 100%;
     height: 2em;
     color: #242424;
     line-height: 2em;
     transition-duration: 0.2s;
     overflow: hidden;
-    cursor: default;
+    cursor: pointer;
+    user-select: none;
 }
 
 .mpExerciseTitle:hover {
     margin-bottom: -3px;
     border-bottom: 3px solid #2e709b;
-    padding-left: 3em;
-    width: 17em;
+    width: 90%;
+    padding-left: 10%;
     transition-duration: 0.2s;
+    background-color: rgba(147, 37, 37, 0.30);
+}
+
+.mpExerciseTitleSelected {
+    width: 90%;
+    padding-left: 10%;
+    color: white;
+    background-color: #932525;
+}
+
+.mpExerciseTitleDone {
+    color: #888;
+    cursor: default;
+    text-decoration: line-through;
+}
+
+.mpExerciseSet, .mpExerciseSetSelected, .mpExerciseSetDone {
+    margin-bottom: -1px;
+    border-bottom: 1px solid rgba(66, 165, 245, 0.4);
+    width: 100%;
+    height: 2em;
+    line-height: 2em;
+    color: #242424;
+    transition-duration: 0.2s;
+    overflow: hidden;
+    cursor: default;
+}
+
+.mpExerciseSetSelected {
+    background-color: #932525;
+    color: #fff;
+    cursor: pointer;
+}
+
+.mpExerciseSetDone {
+    color: #888;
+    text-decoration: line-through;
 }

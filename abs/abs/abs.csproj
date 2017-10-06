@@ -76,6 +76,7 @@
     <Content Include="Web\dataViewer.html" />
     <Content Include="Web\dataViewer.js" />
     <Content Include="Web\exerciseViewer.html" />
+    <Content Include="Web\exerciseViewer.js" />
     <Content Include="Web\Footer.html" />
     <Content Include="Web\Header.html" />
     <Content Include="Web\login.html" />

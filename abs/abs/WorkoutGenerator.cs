@@ -92,7 +92,7 @@ namespace abs {
 
 
         public string title(int user1RM) {
-            return "<div class='mpExerciseTitle hvr-underline-from-left'>" + ex.exerciseName + "</div>";
+            return "<div id='" + uuid + "' class='mpExerciseTitle'>" + ex.exerciseName + "</div>";
         }
         public string html(int user1RM) {
             StringBuilder res = new StringBuilder();
@@ -176,7 +176,7 @@ namespace abs {
         public MuscleGroupQueue legs => groups["legs"];
         public MuscleGroupQueue shoulders => groups["shoulders"];
         public MuscleGroupQueue arms => groups["arms"];
-        public MuscleGroupQueue abs => groups["abs"];
+        public MuscleGroupQueue abs => groups["abdominals"];
 
         UsersPossibleExerciseList exercises = new UsersPossibleExerciseList();
         List<Exercise> myExercises = new List<Exercise>();
@@ -241,7 +241,7 @@ namespace abs {
 
             HashSet<string> excludedGroups = new HashSet<string>();
             foreach(workoutItem item in previousDay) {
-                excludedGroups.Add(item.uuid);
+                excludedGroups.Add(item.ex.mainBodyPart);
             }
 
             List<workoutItem> res = new List<workoutItem>();
@@ -294,7 +294,7 @@ namespace abs {
 
 
                     res.Add(new workoutItem {
-                        uuid = section,
+                        uuid = Guid.NewGuid().ToString(),
                         ex = selectedExercise,
                         sets = new set[] {
                             new set {
@@ -305,7 +305,7 @@ namespace abs {
                             new set {
                                 reps = 12,
                                 percent1RM = 70,
-                                restTime = new TimeSpan(0, 0, -1)
+                                restTime = new TimeSpan(0, 0, 45)
                             },
                             new set {
                                 reps = 15,

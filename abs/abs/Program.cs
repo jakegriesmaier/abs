@@ -173,20 +173,54 @@ namespace abs {
                 return new mpResponse(new binaryData(htmlRes, binaryDataType.html), 200);
             }), false, true);
 
-            assembler.add("exerciseViewer", new mpFile("../../Web/exerciseViewer.html"), true, false);
+            assembler.add("exerciseViewer", new mpPageElement(new mpFile("../../Web/exerciseViewer.html"), new mpFile("../../Web/exerciseViewer.js")), true, false);
 
             assembler.add("exercisePanels", new mpFunctionalGETableToken((rq) => {
-                string htmlRes = "";
+                string workoutItems = "";
                 List<workoutItem> items = p.generateDay(8);
 
-                htmlRes += "<div style='border: 1px solid blue; margin: -1px; width: 20em; height: 2em; text-align: center; line-height: 2em;'>" + "Monday - " + items.First().ex.mainBodyPart + " & " + items.Last().ex.mainBodyPart + "</div>";
+                workoutItems += "<div id='exercisesTitle' style='border: 1px solid blue; margin: -1px; width: 20em; height: 2em; text-align: center; line-height: 2em;'>" + "Monday - " + items.First().ex.mainBodyPart + " & " + items.Last().ex.mainBodyPart + "</div>";
 
                 foreach (workoutItem item in items) {
-                    htmlRes += item.title(200);
+                    workoutItems += item.title(200);
                     //htmlRes += "<br>";
                 }
-                
-                return new mpResponse(new binaryData(htmlRes, binaryDataType.html), 200);
+
+                string itemSections = "";
+                foreach(workoutItem item in items) {
+                    int index = 0;
+                    for(int i = 0; i < item.sets.Count(); i++) {
+                        set s = item.sets[i];
+                        itemSections += 
+                            "<div id='" + item.uuid + "_setinfo_" + (index++) + "' class='mpExerciseSet'>" +
+                               s.reps + " reps at " + Util.percent1RM(s.percent1RM, 200) + "lbs" +
+                            "</div>";
+
+                        if(i != item.sets.Count() - 1) {
+                            if(s.restTime > new TimeSpan(0, 0, 0)) {
+                                itemSections +=
+                                    "<div id='" + item.uuid + "_setinfo_" + (index++) + "' class='mpExerciseSet'>" +
+                                       "Rest " + s.restTime.TotalSeconds + " seconds ... 🕒" +
+                                    "</div>";
+                            }
+                        }
+                    }
+                }
+
+                string res =
+                    "<div id = 'exercises' style = 'border-right: 2px solid #7aa5c2; padding: 1em; margin-right: 1em; display: flex; width: 20em; height: 18em; flex-direction: column;'>" + 
+                        workoutItems +
+                    "</div>" +
+                    "<div id = 'sets' style = 'border-right: 2px solid #7aa5c2; padding: 1em; margin-right: 1em; display: flex; width: 20em; height: 18em; flex-direction: column;'>" +
+                        "<div id='setsTitle' style='border: 1px solid blue; margin: -1px; width: 100%; height: 2em; text-align: center; line-height: 2em;'></div>" +
+                        itemSections +
+                    "</div>" +
+                    "<div id = 'sets' style = 'border-right: 2px solid #7aa5c2; padding: 1em; margin-right: 1em; display: flex; width: 20em; height: 18em; flex-direction: column;'>" +
+                        "<div id='nextExercise'> Next! </div>" +
+                    "</div>";
+
+
+                return new mpResponse(new binaryData(res, binaryDataType.html), 200);
             }), false, false);
 
 
