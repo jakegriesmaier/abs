@@ -4,6 +4,10 @@ let exerciseIDs = [];
 let exerciseProgress = {};
 let elements = document.getElementsByClassName('mpExerciseTitle');
 
+let cachedCountdownEle = null;
+let countdownStartMillis = new Date().getTime();
+let countdownStartSeconds = 0;
+
 let getExerciseElements = function () {
     let exercises = document.getElementById('exercises').children;
 
@@ -36,6 +40,8 @@ let deselectExercises = function () {
 
     selectedExercise = '';
     selectedExerciseIndex = -1;
+
+    fillInfoPanel();
 };
 
 let selectExercise = function (id) {
@@ -69,6 +75,8 @@ let selectExercise = function (id) {
 
     selectedExercise = id;
     selectedExerciseIndex = findExerciseIndexByID(id);
+
+    fillInfoPanel();
 };
 
 let selectExerciseByIndex = function (index) {
@@ -98,6 +106,28 @@ let getNextIncompleteExercise = function () {
     return -1;
 }
 
+let fillInfoPanel = function () {
+    let infoEle = document.getElementById('exercisesInfo');
+    if (selectedExercise != '') {
+        let setEle = document.getElementById(selectedExercise + '_setinfo_' + exerciseProgress[selectedExercise]);
+
+        infoEle.innerHTML = '';
+
+
+        if (setEle.getAttribute("data-exSetType") == 'rest') {
+            infoEle.innerHTML += "<b style='font-size: 16pt;'> Rest ... </b>";
+            infoEle.innerHTML += "<div id='exerciseCountdown' style='display: flex; justify-content: center; align-items: center; margin-top: 6px; font-size: 72px'>" + "timer's broke!" + "</div>";
+            cachedCountdownEle = document.getElementById('exerciseCountdown');
+            restartCountdown(setEle.getAttribute("data-exRestTime"));
+        } else {
+            infoEle.innerHTML += "<b style='font-size: 16pt;'>" + document.getElementById(selectedExercise).innerText + "</b>";
+            infoEle.innerHTML += "<div>    " + setEle.innerText + "</div>";
+        }
+    } else {
+        infoEle.innerHTML = '';
+    }
+}
+
 //set up state
 for (let i = 0, len = elements.length; i < len; i++) {
     let ele = elements[i];
@@ -115,13 +145,12 @@ for (let i = 0, len = elements.length; i < len; i++) {
                 selectExercise(id);
             } else {
                 deselectExercises();
-                ele.className = 'mpExerciseTitle';
             }
         }
     }
 }
 
-
+//set onclick for next button
 document.getElementById('nextExercise').onclick = function () {
     if (selectedExercise != '') {
 
@@ -141,5 +170,32 @@ document.getElementById('nextExercise').onclick = function () {
     }
 }
 
-
 deselectExercises();
+selectExerciseByIndex(0);
+
+let restartCountdown = function (startTime) {
+    countdownStartMillis = new Date().getTime();
+    countdownStartSeconds = startTime;
+
+    _countdown();
+};
+
+let _countdown = function () {
+    if (cachedCountdownEle) {
+        let currentTime = new Date().getTime();
+        let difMillis = currentTime - countdownStartMillis;
+        let rawSecondsSinceStart = difMillis / 1000.0;
+        let secondsSinceStart = Math.floor(rawSecondsSinceStart);
+        let secondsOnTimer = countdownStartSeconds - secondsSinceStart;
+        
+
+        if (secondsOnTimer >= 0) {
+                cachedCountdownEle.style.color = secondsOnTimer <= 10 ? (((Math.floor(difMillis) / 15) % 40 > 20) ? '#f00' : '#000') : '#000';
+                cachedCountdownEle.innerText = secondsOnTimer + 's';
+            setTimeout(_countdown, 50);
+        } else {
+            cachedCountdownEle = null;
+            countdownStartSeconds = 0;
+        }
+    }
+}

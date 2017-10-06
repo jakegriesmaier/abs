@@ -192,14 +192,14 @@ namespace abs {
                     for(int i = 0; i < item.sets.Count(); i++) {
                         set s = item.sets[i];
                         itemSections += 
-                            "<div id='" + item.uuid + "_setinfo_" + (index++) + "' class='mpExerciseSet'>" +
+                            "<div data-exSetType='set' id='" + item.uuid + "_setinfo_" + (index++) + "' class='mpExerciseSet'>" +
                                s.reps + " reps at " + Util.percent1RM(s.percent1RM, 200) + "lbs" +
                             "</div>";
 
                         if(i != item.sets.Count() - 1) {
                             if(s.restTime > new TimeSpan(0, 0, 0)) {
                                 itemSections +=
-                                    "<div id='" + item.uuid + "_setinfo_" + (index++) + "' class='mpExerciseSet'>" +
+                                    "<div data-exSetType='rest' data-exRestTime='" + s.restTime.TotalSeconds + "' id='" + item.uuid + "_setinfo_" + (index++) + "' class='mpExerciseSet'>" +
                                        "Rest " + s.restTime.TotalSeconds + " seconds ... 🕒" +
                                     "</div>";
                             }
@@ -208,15 +208,20 @@ namespace abs {
                 }
 
                 string res =
-                    "<div id = 'exercises' style = 'border-right: 2px solid #7aa5c2; padding: 1em; margin-right: 1em; display: flex; width: 20em; height: 18em; flex-direction: column;'>" + 
+                    "<div id='exercises' style='border-right: 2px solid #7aa5c2; padding: 1em; margin-right: 1em; display: flex; width: 20em; height: 18em; flex-direction: column;'>" + 
                         workoutItems +
                     "</div>" +
-                    "<div id = 'sets' style = 'border-right: 2px solid #7aa5c2; padding: 1em; margin-right: 1em; display: flex; width: 20em; height: 18em; flex-direction: column;'>" +
+                    "<div id='sets' style='border-right: 2px solid #7aa5c2; padding: 1em; margin-right: 1em; display: flex; width: 20em; height: 18em; flex-direction: column;'>" +
                         "<div id='setsTitle' style='border: 1px solid blue; margin: -1px; width: 100%; height: 2em; text-align: center; line-height: 2em;'></div>" +
                         itemSections +
                     "</div>" +
-                    "<div id = 'sets' style = 'border-right: 2px solid #7aa5c2; padding: 1em; margin-right: 1em; display: flex; width: 20em; height: 18em; flex-direction: column;'>" +
-                        "<div id='nextExercise'> Next! </div>" +
+                    "<div style='border-right: 2px solid #7aa5c2; padding: 1em; margin-right: 1em; display: flex; width: 20em; height: 18em; flex-direction: column;'>" +
+                        "<div id='exercisesInfo' style='flex-grow: 7; display: flex; flex-direction: column;'> </div>" +
+                        "<div myInfo='test' style='flex-grow: 1; display: flex; flex-direction: row; align-items: stretch;'>" +
+                            "<div class='mpExerciseButton'> Info </div>" +
+                            "<div class='mpExerciseButton'> Skip </div>" +
+                            "<div id='nextExercise' class='mpExerciseButton' style='flex-grow: 2'> Next </div>" +
+                        "</div>" +
                     "</div>";
 
 

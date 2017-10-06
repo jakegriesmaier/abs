@@ -186,3 +186,29 @@ input[type=text]:focus {
     color: #888;
     text-decoration: line-through;
 }
+
+.mpExerciseButton {
+    background-color: #6af;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    cursor: pointer;
+    user-select: none;
+    outline: 0 solid #fff;
+    transition-duration: 0.1s;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+.mpExerciseButton:hover {
+    background-color: #7cf;
+    outline: 3px solid rgba(66, 165, 245, 0.8);
+    transition-duration: 0.1s;
+}
+
+.mpExerciseButton:active {
+    background-color: #fcc;
+    outline: 3px solid rgba(91, 0, 0, 0.84);
+    transition-duration: 0.1s;
+}

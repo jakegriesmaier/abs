@@ -300,7 +300,7 @@ namespace abs {
                             new set {
                                 reps = 10,
                                 percent1RM = 70,
-                                restTime = new TimeSpan(0, 0, 60)
+                                restTime = new TimeSpan(0, 0, 3)
                             },
                             new set {
                                 reps = 12,
