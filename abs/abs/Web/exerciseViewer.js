@@ -77,6 +77,9 @@ let selectExercise = function (id) {
     selectedExerciseIndex = findExerciseIndexByID(id);
 
     fillInfoPanel();
+
+    let ytLink = document.getElementById(selectedExercise).getAttribute("ytLink");
+    if (document.getElementById("helperVideo").src != ytLink) document.getElementById("helperVideo").src = ytLink;
 };
 
 let selectExerciseByIndex = function (index) {
@@ -119,9 +122,16 @@ let fillInfoPanel = function () {
             infoEle.innerHTML += "<div id='exerciseCountdown' style='display: flex; justify-content: center; align-items: center; margin-top: 6px; font-size: 72px'>" + "timer's broke!" + "</div>";
             cachedCountdownEle = document.getElementById('exerciseCountdown');
             restartCountdown(setEle.getAttribute("data-exRestTime"));
+            
+            document.getElementById("helperVideoPanel").style.display = "none";
+            document.getElementById("feedback").style.display = "flex";
+            updateFeedback(2); 
         } else {
             infoEle.innerHTML += "<b style='font-size: 16pt;'>" + document.getElementById(selectedExercise).innerText + "</b>";
             infoEle.innerHTML += "<div>    " + setEle.innerText + "</div>";
+            
+            document.getElementById("helperVideoPanel").style.display = "flex";
+            document.getElementById("feedback").style.display = "none";
         }
     } else {
         infoEle.innerHTML = '';
@@ -165,13 +175,38 @@ document.getElementById('nextExercise').onclick = function () {
                 }
             }
         } else {
-            if(selectedExerciseIndex != exerciseIDs.length - 1) selectExerciseByIndex(getNextIncompleteExercise());
+            if (selectedExerciseIndex != exerciseIDs.length - 1) selectExerciseByIndex(getNextIncompleteExercise());
         }
+    }
+}
+
+let updateFeedback = function (toBeSelected) {
+    document.getElementById("feedbackOptions").children[0].style.backgroundColor = '#6af';
+    document.getElementById("feedbackOptions").children[1].style.backgroundColor = '#6af';
+    document.getElementById("feedbackOptions").children[2].style.backgroundColor = '#6af';
+    document.getElementById("feedbackOptions").children[toBeSelected - 1].style.backgroundColor = '#932525';
+}
+
+let setFeedbackCallbacks = function () {
+    let children = document.getElementById("feedbackOptions").children;
+    for (let i = 0; i < children.length; i++) {
+        children[i].onclick = function () {
+            updateFeedback(i + 1);
+            let req = new XMLHttpRequest();
+            req.open("POST", "/login/feedbackTarget");
+            req.send(JSON.stringify({
+                'exerciseID': selectedExercise,
+                'exerciseIndex': (exerciseProgress[selectedExercise] - 1) / 2,
+                'difficulty': i + 1
+            }));
+        };
     }
 }
 
 deselectExercises();
 selectExerciseByIndex(0);
+setFeedbackCallbacks();
+updateFeedback(2);
 
 let restartCountdown = function (startTime) {
     countdownStartMillis = new Date().getTime();
@@ -190,10 +225,11 @@ let _countdown = function () {
         
 
         if (secondsOnTimer >= 0) {
-                cachedCountdownEle.style.color = secondsOnTimer <= 10 ? (((Math.floor(difMillis) / 15) % 40 > 20) ? '#f00' : '#000') : '#000';
-                cachedCountdownEle.innerText = secondsOnTimer + 's';
+            cachedCountdownEle.style.color = secondsOnTimer <= 10 ? (((Math.floor(difMillis) / 15) % 40 > 20) ? '#f00' : '#000') : '#000';
+            cachedCountdownEle.innerText = secondsOnTimer + 's';
             setTimeout(_countdown, 50);
         } else {
+            cachedCountdownEle.style.color = '#000';
             cachedCountdownEle = null;
             countdownStartSeconds = 0;
         }

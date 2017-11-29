@@ -36,10 +36,38 @@ namespace abs {
     }
 
     class Program {
+        static void ResetDatabase(Database db) {
+            //refresh users table
+            db.deleteTableIfExists("users");
+            db.createTableIfNeeded("users", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
+                new KeyValuePair<string, string>("userid", "text"),
+                new KeyValuePair<string, string>("username", "text"),
+                new KeyValuePair<string, string>("email", "text"),
+                new KeyValuePair<string, string>("salt", "text"),
+                new KeyValuePair<string, string>("password", "text")
+            }));
+
+            //refresh data tables
+            db.deleteTableIfExists("weight");
+            db.createTableIfNeeded("weight", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
+                new KeyValuePair<string, string>("userid", "text"),
+                new KeyValuePair<string, string>("date", "text"),
+                new KeyValuePair<string, string>("value", "text")
+            }));
+
+            for (int i = 0; i < 50; i++) {
+                db.addRow("weight", new List<string>(new string[] { "user", DateTime.UtcNow.ToString(), (i * i / 50 + 100).ToString() }));
+            }
+        }
+
         static void Main(string[] args) {
             Database db = new Database("Server=localhost;Port=5432;Username=postgres;Password=admin;Database=postgres");
 
-
+            ResetDatabase(db);
+            
+            //initialize userManager
+            userManager man = new userManager(db);
+            man.addUser("user", "pass", "user@gmail.com");
 
             planDefinition def = new planDefinition();
             Plan p = new Plan(def, db);
@@ -57,31 +85,7 @@ namespace abs {
 
 
 
-            //refresh users table
-            db.deleteTableIfExists("users");
-            db.createTableIfNeeded("users", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
-                new KeyValuePair<string, string>("userid", "text"),
-                new KeyValuePair<string, string>("username", "text"),
-                new KeyValuePair<string, string>("email", "text"),
-                new KeyValuePair<string, string>("salt", "text"),
-                new KeyValuePair<string, string>("password", "text")
-            }));
-
-            //initialize userManager
-            userManager man = new userManager(db);
-            man.addUser("user", "pass", "user@gmail.com");
-
-            //refresh data tables
-            db.deleteTableIfExists("weight");
-            db.createTableIfNeeded("weight", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
-                new KeyValuePair<string, string>("userid", "text"),
-                new KeyValuePair<string, string>("date", "text"),
-                new KeyValuePair<string, string>("value", "text")
-            }));
-
-            for (int i = 0; i < 50; i++) {
-                db.addRow("weight", new List<string>(new string[] { "user", DateTime.UtcNow.ToString(), (i * i / 50 + 100).ToString() }));
-            }
+            
             
 
 
@@ -116,10 +120,25 @@ namespace abs {
                     return new mpArray();
                 }
             });
-            mpBase.addProperty("login", lman);//
+            lman.add("feedbackTarget", authToke => {
+                return new mpRestfulTarget(null, req => {
+                    mpObject obj = mpJson.parse(req.data()) as mpObject;
 
+                    if(obj != null) {
+                        string exerciseID = (obj.getChild("exerciseID") as mpValue).data.asString();
+                        int exerciseIndex = (obj.getChild("exerciseIndex") as mpValue).data.asInt();
+                        int difficulty = (obj.getChild("difficulty") as mpValue).data.asInt();
 
+                        workoutItem t = p.pastDays[0].Find(item => item.uuid == exerciseID);
+                        t.sets[exerciseIndex].feedback.difficulty = difficulty;
+                    }
 
+                    return new mpResponse(200);
+                });
+            });
+            mpBase.addProperty("login", lman);
+
+            
 
 
             mpBase.addProperty("userRecordings", new mpChildGetter(child => {
@@ -177,12 +196,12 @@ namespace abs {
 
             assembler.add("exercisePanels", new mpFunctionalGETableToken((rq) => {
                 string workoutItems = "";
-                List<workoutItem> items = p.generateDay(8);
+                List<workoutItem> items = p.pastDays[0];
 
                 workoutItems += "<div id='exercisesTitle' style='border: 1px solid blue; margin: -1px; width: 20em; height: 2em; text-align: center; line-height: 2em;'>" + "Monday - " + items.First().ex.mainBodyPart + " & " + items.Last().ex.mainBodyPart + "</div>";
 
                 foreach (workoutItem item in items) {
-                    workoutItems += item.title(200);
+                    workoutItems += item.title();
                     //htmlRes += "<br>";
                 }
 
@@ -191,15 +210,15 @@ namespace abs {
                     int index = 0;
                     for(int i = 0; i < item.sets.Count(); i++) {
                         set s = item.sets[i];
-                        itemSections += 
-                            "<div data-exSetType='set' id='" + item.uuid + "_setinfo_" + (index++) + "' class='mpExerciseSet'>" +
+                        itemSections +=
+                            "<div data-exSetType='set' completed='" + s.completed + "' id='" + item.uuid + "_setinfo_" + (index++) + "' class='mpExerciseSet'>" +
                                s.reps + " reps at " + Util.percent1RM(s.percent1RM, 200) + "lbs" +
                             "</div>";
 
-                        if(i != item.sets.Count() - 1) {
+                        if(i != item.sets.Count()) {
                             if(s.restTime > new TimeSpan(0, 0, 0)) {
                                 itemSections +=
-                                    "<div data-exSetType='rest' data-exRestTime='" + s.restTime.TotalSeconds + "' id='" + item.uuid + "_setinfo_" + (index++) + "' class='mpExerciseSet'>" +
+                                    "<div data-exSetType='rest' completed='" + s.completed + "' data-exRestTime='" + s.restTime.TotalSeconds + "' id='" + item.uuid + "_setinfo_" + (index++) + "' class='mpExerciseSet'>" +
                                        "Rest " + s.restTime.TotalSeconds + " seconds ... 🕒" +
                                     "</div>";
                             }
@@ -217,10 +236,23 @@ namespace abs {
                     "</div>" +
                     "<div style='border-right: 2px solid #7aa5c2; padding: 1em; margin-right: 1em; display: flex; width: 20em; height: 18em; flex-direction: column;'>" +
                         "<div id='exercisesInfo' style='flex-grow: 7; display: flex; flex-direction: column;'> </div>" +
-                        "<div myInfo='test' style='flex-grow: 1; display: flex; flex-direction: row; align-items: stretch;'>" +
+                        "<div style='flex-grow: 1; display: flex; flex-direction: row; align-items: stretch;'>" +
                             "<div class='mpExerciseButton'> Info </div>" +
                             "<div class='mpExerciseButton'> Skip </div>" +
-                            "<div id='nextExercise' class='mpExerciseButton' style='flex-grow: 2'> Next </div>" +
+                            "<div id='nextExercise' class='mpExerciseButton' style='flex-grow: 2'> Done </div>" +
+                        "</div>" +
+                    "</div>" +
+                    "<div style='border-right: 2px solid #7aa5c2; padding: 1em; margin-right: 1em; display: flex; width: 20em; height: 18em; flex-direction: column;'>" +
+                        "<div id='helperVideoPanel' style='flex-grow: 1; display: flex; flex-direction: row; align-items: stretch;'>" +
+                            "<iframe id='helperVideo' width='560' height='315' src='' frameborder='0' allowfullscreen></iframe>" +
+                        "</div>" +
+                        "<div id='feedback' style='flex-grow: 1; display: flex; flex-direction: column; align-items: stretch;'>" +
+                            "(Feedback, optional)" +
+                            "<div id='feedbackOptions' style='flex-grow: 1; display: flex; flex-direction: row; align-items: stretch;'>" +
+                                "<div class='mpExerciseButton' style='font-size:xx-large'> 👍🏻 </div>" +
+                                "<div class='mpExerciseButton' style='font-size:xx-large'> 👌🏻 </div>" +
+                                "<div class='mpExerciseButton' style='font-size:xx-large'> 👎🏻 </div>" +
+                            "</div>" +
                         "</div>" +
                     "</div>";
 
@@ -285,7 +317,8 @@ namespace abs {
             };
             mpBase.addProperty("registerTarget", registerTarget);
 
-            
+            mpBase.addProperty("reftest", new mpReference("/web"));
+
             mpServer server = new mpServer();
             server.start(mpBase.restful, "http://*:8080/");
 

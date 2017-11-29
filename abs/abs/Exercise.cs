@@ -15,6 +15,7 @@ namespace abs {
             setWeightRequired();
             setRequiresWeight();
             setIsDoubleExercise();
+            this.youtube = "https://www.youtube.com/embed/qYV8zuz2qA0";
         }
 
         private Exercise(string ExerciseName, string mainBodypart, bool isCompound, int areaNumber, bool requiresWeight, string equipmentRequired, string equipmentRequired2, string weightrequired, bool isDoubleExercise) {
@@ -27,6 +28,7 @@ namespace abs {
             this.equipmentRequired = equipmentRequired2;
             this.weightRequired = weightrequired;
             this.isDoubleExercise = isDoubleExercise;
+            this.youtube = "https://www.youtube.com/embed/qYV8zuz2qA0";
         }
 
 
@@ -79,6 +81,7 @@ namespace abs {
         public string equipmentRequired2;
         public string weightRequired;
         public bool isDoubleExercise;
+        public string youtube;
 
         public static HashSet<Exercise> getAllExercises(Database db) {
             var exercises = db.query("select * from allknownexercises");
