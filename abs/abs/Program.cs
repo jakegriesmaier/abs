@@ -40,30 +40,72 @@ namespace abs {
             //refresh users table
             db.deleteTableIfExists("users");
             db.createTableIfNeeded("users", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
-                new KeyValuePair<string, string>("userid", "text"),
                 new KeyValuePair<string, string>("username", "text"),
                 new KeyValuePair<string, string>("email", "text"),
                 new KeyValuePair<string, string>("salt", "text"),
                 new KeyValuePair<string, string>("password", "text")
             }));
 
-            //refresh data tables
-            db.deleteTableIfExists("weight");
-            db.createTableIfNeeded("weight", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
-                new KeyValuePair<string, string>("userid", "text"),
-                new KeyValuePair<string, string>("date", "text"),
-                new KeyValuePair<string, string>("value", "text")
+            db.deleteTableIfExists("userInfo");
+            db.createTableIfNeeded("userInfo", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
+                new KeyValuePair<string, string>("associatedUser", "text"),
+                new KeyValuePair<string, string>("birthday", "text"),
+                new KeyValuePair<string, string>("gender", "char(1)"),
+                new KeyValuePair<string, string>("oneRepMax", "int"),
+                new KeyValuePair<string, string>("experience", "int")
             }));
-
-            for (int i = 0; i < 50; i++) {
-                db.addRow("weight", new List<string>(new string[] { "user", DateTime.UtcNow.ToString(), (i * i / 50 + 100).ToString() }));
-            }
+            
+            db.deleteTableIfExists("plans");
+            db.createTableIfNeeded("plans", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
+                new KeyValuePair<string, string>("associatedUser", "text"),
+                new KeyValuePair<string, string>("age", "real"),
+                new KeyValuePair<string, string>("gender", "char(1)"),
+                new KeyValuePair<string, string>("oneRepMax", "int"),
+                new KeyValuePair<string, string>("experience", "int"),
+                new KeyValuePair<string, string>("workoutTimes", "text"),
+                new KeyValuePair<string, string>("equipmentAvailable", "text")
+            }));
+            
+            db.deleteTableIfExists("workoutDays");
+            db.createTableIfNeeded("workoutDays", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
+                new KeyValuePair<string, string>("dayID", "text"),
+                new KeyValuePair<string, string>("associatedUser", "text"),
+                new KeyValuePair<string, string>("workoutDate", "date"),
+                new KeyValuePair<string, string>("primaryGroup", "text"),
+                new KeyValuePair<string, string>("secondaryGroup", "text"),
+                new KeyValuePair<string, string>("itemCount", "int")
+            }));
+            
+            db.deleteTableIfExists("workoutItems");
+            db.createTableIfNeeded("workoutItems", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
+                new KeyValuePair<string, string>("itemID", "text"),
+                new KeyValuePair<string, string>("associatedDay", "text"),
+                new KeyValuePair<string, string>("exerciseName", "text"),
+                new KeyValuePair<string, string>("setCount", "int")
+            }));
+            
+            db.deleteTableIfExists("workoutSets");
+            db.createTableIfNeeded("workoutSets", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
+                new KeyValuePair<string, string>("associatedItem", "text"),
+                new KeyValuePair<string, string>("reps", "int"),
+                new KeyValuePair<string, string>("percent1RM", "int"),
+                new KeyValuePair<string, string>("restTime", "real"),
+                new KeyValuePair<string, string>("feedbackCompleted", "bool"),
+                new KeyValuePair<string, string>("feedbackDifficulty", "int"),
+                new KeyValuePair<string, string>("fedbackReps", "int"),
+                new KeyValuePair<string, string>("fedbackWeight", "int")
+            }));
+            
+            
         }
 
         static void Main(string[] args) {
-            Database db = new Database("Server=localhost;Port=5432;Username=postgres;Password=admin;Database=postgres");
+            Database db = new Database("Server=bennywwg.info;Port=5432;Username=postgres;Password=admin;Database=postgres");
 
             ResetDatabase(db);
+            
+            return;
+            
             
             //initialize userManager
             userManager man = new userManager(db);
@@ -282,6 +324,7 @@ namespace abs {
             ));
             mpBase.addProperty("login", loginTestTarget);
             
+            string color = "#FC000F";
 
             mpRestfulTarget registerTarget = new mpRestfulTarget(null);
             registerTarget.POSTFunc = request => {

@@ -26,6 +26,7 @@ namespace abs {
             this.calorieMultiplier = 0;
             this.macroMultiplier = new double[2];
 
+            
             calculateCalorieMultiplier();
             calculateCalories();
             calculateMacroRatio();
