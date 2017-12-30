@@ -224,15 +224,21 @@ namespace abs {
 
             Dictionary<string, List<binaryData>> days = dat.query("SELECT * FROM workoutdays WHERE associateduser='" + user.username + "';");
 
+            List<binaryData> primaryGroups = days["primarygroup"];
+            List<binaryData> secondaryGroups = days["secondarygroup"];
+            List<binaryData> dates = days["workoutdate"];
             for(int i =  0; i < days.First().Value.Count; i++) {
                 this.oldItems.Add(new WorkoutDay { workoutItems = new List<workoutItem> { },
-                    primaryGroup = days["primarygroup"][i].asString(),
-                    secondaryGroup = days["secondarygroup"][i].asString(),
-                    date =  DateTime.Parse(days["workoutdate"][i].asString())//add date time to monopage
+                    primaryGroup =  primaryGroups[i].asString(),
+                    secondaryGroup = secondaryGroups[i].asString(),
+                    date =  DateTime.Parse(dates[i].asString()) //add date time to monopage @quinn :(
                 });
             }
-
             
+            Dictionary<string, List<binaryData>> items = dat.query("SELECT * FROM workoutitems ORDER BY associatedday ASC");
+            
+            
+            for(int i = 0; i 
 
         }
 
