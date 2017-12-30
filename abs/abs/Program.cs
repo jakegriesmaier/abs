@@ -58,12 +58,9 @@ namespace abs {
             db.deleteTableIfExists("plans");
             db.createTableIfNeeded("plans", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
                 new KeyValuePair<string, string>("associatedUser", "text"),
-                new KeyValuePair<string, string>("age", "real"),
-                new KeyValuePair<string, string>("gender", "char(1)"),
-                new KeyValuePair<string, string>("oneRepMax", "int"),
-                new KeyValuePair<string, string>("experience", "int"),
                 new KeyValuePair<string, string>("workoutTimes", "text"),
-                new KeyValuePair<string, string>("equipmentAvailable", "text")
+                new KeyValuePair<string, string>("equipmentAvailable", "text"),
+                new KeyValuePair<string, string>("goal", "char(1)")
             }));
             
             db.deleteTableIfExists("workoutDays");

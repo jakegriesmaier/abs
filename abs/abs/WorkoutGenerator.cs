@@ -73,7 +73,7 @@ namespace abs {
     public struct workoutItem {
         public string uuid;
         public Exercise ex;
-        public set[] sets;
+        public List<set> sets;
         public bool completed { get { foreach (set s in sets) { if (!s.completed) return false; } return true; } }
 
         public string readable(int user1RM) {
@@ -158,17 +158,24 @@ namespace abs {
     }
 
     public struct planDefinition {
-        public int age;
-        public biologicalGender gender;
-        public int experience;
         public int[] workoutTimes;
-        public string[] equipmentAvailable;
-        public string goal;
+        public List<string> equipmentAvailable;
+        public char goal;
+    }
+
+    public struct WorkoutDay {
+        public List<workoutItem> workoutItems;
+        public string primaryGroup;
+        public string secondaryGroup;
+        public DateTime date;
     }
 
     //TODO finish
     public class Plan {
         public HashSet<Exercise> allExercises;
+        public HashSet<WorkoutDay> oldItems;
+        public User user;
+        public Database dat;
 
         public planDefinition definition;
 
@@ -179,6 +186,59 @@ namespace abs {
         public MuscleGroupQueue shoulders => groups["shoulders"];
         public MuscleGroupQueue arms => groups["arms"];
         public MuscleGroupQueue abs => groups["abdominals"];
+
+        public Plan(Database dat, User user) {
+            this.user = user;
+            this.dat = dat;
+
+            this.pastDays = new List<List<workoutItem>>();
+
+            groups = new Dictionary<string, MuscleGroupQueue>();
+            groups.Add("chest", new MuscleGroupQueue("chest", 1.0));
+            groups.Add("back", new MuscleGroupQueue("back", 1.0));
+            groups.Add("legs", new MuscleGroupQueue("legs", 1.0));
+            groups.Add("shoulders", new MuscleGroupQueue("shoulders", 0.8));
+            groups.Add("arms", new MuscleGroupQueue("arms", 0.8));
+            groups.Add("abdominals", new MuscleGroupQueue("abdominals", 0.8));
+
+            allExercises = Exercise.getAllExercises(dat);
+
+            Dictionary<string, List<binaryData>> res = dat.query("SELECT * FROM plans WHERE associateduser='" + user.username + "';");
+
+            if(res.First().Value.Count == 0) {
+                this.definition = new planDefinition {
+                    workoutTimes = new int[] { 0, 0, 0, 0, 0, 0, 0 },
+                    equipmentAvailable = new List<string> { },
+                    goal = 'm'
+                };
+
+                return;
+
+            } else {
+                this.definition = new planDefinition {
+                    workoutTimes = res["workouttimes"].First().asString().Split(',').Select(str => int.Parse(str)).ToArray(),
+                    equipmentAvailable = res["equipmentavailable"].First().asString().Split(',').ToList(),
+                    goal = res["goal"].First().asString().First()//need as char in monopage @quinn :(
+               };
+            }
+
+            Dictionary<string, List<binaryData>> days = dat.query("SELECT * FROM workoutdays WHERE associateduser='" + user.username + "';");
+
+            for(int i =  0; i < days.First().Value.Count; i++) {
+                this.oldItems.Add(new WorkoutDay { workoutItems = new List<workoutItem> { },
+                    primaryGroup = days["primarygroup"][i].asString(),
+                    secondaryGroup = days["secondarygroup"][i].asString(),
+                    date =  DateTime.Parse(days["workoutdate"][i].asString())//add date time to monopage
+                });
+            }
+
+            
+
+        }
+
+        static void store() {
+
+        }
 
 
         //selects the style of workout for the plan 
@@ -297,7 +357,7 @@ namespace abs {
                     res.Add(new workoutItem {
                         uuid = Guid.NewGuid().ToString(),
                         ex = selectedExercise,
-                        sets = new set[] {
+                        sets = new List<set> {
                             new set {
                                 reps = 10,
                                 percent1RM = 70,
