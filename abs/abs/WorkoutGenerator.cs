@@ -203,9 +203,9 @@ namespace abs {
 
             allExercises = Exercise.getAllExercises(dat);
 
-            Dictionary<string, List<binaryData>> res = dat.query("SELECT * FROM plans WHERE associateduser='" + user.username + "';");
+            QueryResult res = dat.query("SELECT * FROM plans WHERE associateduser='" + user.username + "';");
 
-            if(res.First().Value.Count == 0) {
+            if(res.Columns == 0) {
                 this.definition = new planDefinition {
                     workoutTimes = new int[] { 0, 0, 0, 0, 0, 0, 0 },
                     equipmentAvailable = new List<string> { },
@@ -216,28 +216,25 @@ namespace abs {
 
             } else {
                 this.definition = new planDefinition {
-                    workoutTimes = res["workouttimes"].First().asString().Split(',').Select(str => int.Parse(str)).ToArray(),
-                    equipmentAvailable = res["equipmentavailable"].First().asString().Split(',').ToList(),
-                    goal = res["goal"].First().asString().First()//need as char in monopage @quinn :(
+                    workoutTimes = res.GetField("workouttimes", 0).asString().Split(',').Select(str => int.Parse(str)).ToArray(),
+                    equipmentAvailable = res.GetField("equipmentavailable", 0).asString().Split(',').ToList(),
+                    goal = res.GetField("goal", 0).asString().First()//need as char in monopage @quinn :(
                };
             }
 
-            Dictionary<string, List<binaryData>> days = dat.query("SELECT * FROM workoutdays WHERE associateduser='" + user.username + "';");
+            QueryResult days = dat.query("SELECT * FROM workoutdays WHERE associateduser='" + user.username + "';");
 
-            List<binaryData> primaryGroups = days["primarygroup"];
-            List<binaryData> secondaryGroups = days["secondarygroup"];
-            List<binaryData> dates = days["workoutdate"];
-            for(int i =  0; i < days.First().Value.Count; i++) {
-                this.oldItems.Add(new WorkoutDay { workoutItems = new List<workoutItem> { },
-                    primaryGroup =  primaryGroups[i].asString(),
-                    secondaryGroup = secondaryGroups[i].asString(),
-                    date =  DateTime.Parse(dates[i].asString()) //add date time to monopage @quinn :(
+            for(int i =  0; i < days.Columns; i++) {
+                this.oldItems.Add(new WorkoutDay {
+                    workoutItems = new List<workoutItem> { },
+                    primaryGroup = days.GetField("primarygroup", i).asString(),
+                    secondaryGroup = days.GetField("secondarygroup", i).asString(),
+                    date = days.GetField("workoutdate", i).asDate()
                 });
             }
             
-            Dictionary<string, List<binaryData>> items = dat.query("SELECT * FROM workoutitems ORDER BY associatedday ASC");
-            
-            
+            QueryResult items = dat.query("SELECT * FROM workoutitems ORDER BY associatedday ASC");
+
             for(int i = 0; i 
 
         }
