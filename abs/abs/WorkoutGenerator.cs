@@ -173,7 +173,7 @@ namespace abs {
     //TODO finish
     public class Plan {
         public HashSet<Exercise> allExercises;
-        public HashSet<WorkoutDay> oldItems;
+        public HashSet<WorkoutDay> oldDays;
         public User user;
         public Database dat;
 
@@ -191,8 +191,6 @@ namespace abs {
             this.user = user;
             this.dat = dat;
 
-            this.pastDays = new List<List<workoutItem>>();
-
             groups = new Dictionary<string, MuscleGroupQueue>();
             groups.Add("chest", new MuscleGroupQueue("chest", 1.0));
             groups.Add("back", new MuscleGroupQueue("back", 1.0));
@@ -205,7 +203,7 @@ namespace abs {
 
             QueryResult res = dat.query("SELECT * FROM plans WHERE associateduser='" + user.username + "';");
 
-            if(res.Columns == 0) {
+            if (res.Columns == 0) {
                 this.definition = new planDefinition {
                     workoutTimes = new int[] { 0, 0, 0, 0, 0, 0, 0 },
                     equipmentAvailable = new List<string> { },
@@ -219,23 +217,57 @@ namespace abs {
                     workoutTimes = res.GetField("workouttimes", 0).asString().Split(',').Select(str => int.Parse(str)).ToArray(),
                     equipmentAvailable = res.GetField("equipmentavailable", 0).asString().Split(',').ToList(),
                     goal = res.GetField("goal", 0).asString().First()//need as char in monopage @quinn :(
-               };
+                };
             }
 
             QueryResult days = dat.query("SELECT * FROM workoutdays WHERE associateduser='" + user.username + "';");
 
-            for(int i =  0; i < days.Columns; i++) {
-                this.oldItems.Add(new WorkoutDay {
+            for (int i = 0; i < days.Columns; i++) {
+                this.oldDays.Add(new WorkoutDay {
                     workoutItems = new List<workoutItem> { },
                     primaryGroup = days.GetField("primarygroup", i).asString(),
                     secondaryGroup = days.GetField("secondarygroup", i).asString(),
                     date = days.GetField("workoutdate", i).asDate()
-                });
+            });                    
             }
-            
-            QueryResult items = dat.query("SELECT * FROM workoutitems ORDER BY associatedday ASC");
 
-            for(int i = 0; i 
+            foreach(WorkoutDay d in oldDays) {
+                QueryResult items = dat.query("SELECT * FROM workoutitems WHERE associatedday ='" + d.date +"';");
+
+                for(int i = 0; i < items.Rows; i++) {
+                    Exercise exercise = null;
+                    String uuid = items.GetField("itemid", i).asString();
+
+                    foreach (Exercise ex in allExercises) {
+                        if (ex.getExerciseName().Equals(items.GetField("exercisename", i))) {
+                            exercise = ex;
+                        }
+                    }
+
+                    QueryResult setQuery = dat.query("SELECT * FROM workoutsets WHERE associateditem ='" + uuid + "';");
+                    List<set> exerciseSets = null;
+                    for(int j = 0; j < setQuery.Rows; j++) {
+                        exerciseSets.Add(new set {
+                            feedback = new setFeedback {
+                                completed = setQuery.GetField("feedbackcompleted", j).asBool(),
+                                difficulty = setQuery.GetField("feedbackdifficulty", j).asInt(),
+                                reps = setQuery.GetField("feedbackreps", j).asInt(),
+                                weight = setQuery.GetField("feedbackweight", j).asInt()
+                            },
+
+                        });
+                    }
+
+                    d.workoutItems.Add(new workoutItem {
+                        uuid = uuid,
+                        ex = exercise,
+                        sets = exerciseSets
+                    });
+                }
+
+                oldDays.Add(d);
+            }
+
 
         }
 

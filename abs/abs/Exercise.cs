@@ -135,6 +135,14 @@ namespace abs {
 
             return res;
         }
+        
+        public static Exercise getByName(this HashSet<Exercise> ex, string name) {
+            foreach(Exercise e in ex) {
+                if (e.getExerciseName().Equals(name)) {
+                    return e;
+                }
+            } return null;
+        }
 
         public static HashSet<Exercise> whereAreaIs(HashSet<Exercise> exercises, string mainbodypart) {
             HashSet<Exercise> res = new HashSet<Exercise>();

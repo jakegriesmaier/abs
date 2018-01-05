@@ -46,51 +46,51 @@ namespace abs {
                 new KeyValuePair<string, string>("password", "text")
             }));
 
-            db.deleteTableIfExists("userInfo");
-            db.createTableIfNeeded("userInfo", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
-                new KeyValuePair<string, string>("associatedUser", "text"),
+            db.deleteTableIfExists("userinfo");
+            db.createTableIfNeeded("userinfo", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
+                new KeyValuePair<string, string>("associateduser", "text"),
                 new KeyValuePair<string, string>("birthday", "text"),
                 new KeyValuePair<string, string>("gender", "char(1)"),
-                new KeyValuePair<string, string>("oneRepMax", "int"),
+                new KeyValuePair<string, string>("onerepmax", "int"),
                 new KeyValuePair<string, string>("experience", "int")
             }));
             
             db.deleteTableIfExists("plans");
             db.createTableIfNeeded("plans", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
-                new KeyValuePair<string, string>("associatedUser", "text"),
-                new KeyValuePair<string, string>("workoutTimes", "text"),
-                new KeyValuePair<string, string>("equipmentAvailable", "text"),
+                new KeyValuePair<string, string>("associateduser", "text"),
+                new KeyValuePair<string, string>("workouttimes", "text"),
+                new KeyValuePair<string, string>("equipmentavailable", "text"),
                 new KeyValuePair<string, string>("goal", "char(1)")
             }));
             
-            db.deleteTableIfExists("workoutDays");
-            db.createTableIfNeeded("workoutDays", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
-                new KeyValuePair<string, string>("dayID", "text"),
-                new KeyValuePair<string, string>("associatedUser", "text"),
-                new KeyValuePair<string, string>("workoutDate", "date"),
-                new KeyValuePair<string, string>("primaryGroup", "text"),
-                new KeyValuePair<string, string>("secondaryGroup", "text"),
-                new KeyValuePair<string, string>("itemCount", "int")
+            db.deleteTableIfExists("workoutdays");
+            db.createTableIfNeeded("workoutdays", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
+                new KeyValuePair<string, string>("dayid", "text"),
+                new KeyValuePair<string, string>("associateduser", "text"),
+                new KeyValuePair<string, string>("workoutdate", "date"),
+                new KeyValuePair<string, string>("primarygroup", "text"),
+                new KeyValuePair<string, string>("secondarygroup", "text"),
+                new KeyValuePair<string, string>("itemcount", "int")
             }));
             
-            db.deleteTableIfExists("workoutItems");
-            db.createTableIfNeeded("workoutItems", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
-                new KeyValuePair<string, string>("itemID", "text"),
-                new KeyValuePair<string, string>("associatedDay", "text"),
-                new KeyValuePair<string, string>("exerciseName", "text"),
-                new KeyValuePair<string, string>("setCount", "int")
+            db.deleteTableIfExists("workoutitems");
+            db.createTableIfNeeded("workoutitems", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
+                new KeyValuePair<string, string>("itemid", "text"),
+                new KeyValuePair<string, string>("associatedday", "text"),
+                new KeyValuePair<string, string>("exercisename", "text"),
+                new KeyValuePair<string, string>("setcount", "int")
             }));
             
-            db.deleteTableIfExists("workoutSets");
-            db.createTableIfNeeded("workoutSets", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
-                new KeyValuePair<string, string>("associatedItem", "text"),
+            db.deleteTableIfExists("workoutsets");
+            db.createTableIfNeeded("workoutsets", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
+                new KeyValuePair<string, string>("associateditem", "text"),
                 new KeyValuePair<string, string>("reps", "int"),
-                new KeyValuePair<string, string>("percent1RM", "int"),
-                new KeyValuePair<string, string>("restTime", "real"),
-                new KeyValuePair<string, string>("feedbackCompleted", "bool"),
-                new KeyValuePair<string, string>("feedbackDifficulty", "int"),
-                new KeyValuePair<string, string>("fedbackReps", "int"),
-                new KeyValuePair<string, string>("fedbackWeight", "int")
+                new KeyValuePair<string, string>("percent1rm", "int"),
+                new KeyValuePair<string, string>("resttime", "real"),
+                new KeyValuePair<string, string>("feedbackcompleted", "bool"),
+                new KeyValuePair<string, string>("feedbackdifficulty", "int"),
+                new KeyValuePair<string, string>("feedbackreps", "int"),
+                new KeyValuePair<string, string>("feedbackweight", "int")
             }));
             
             
