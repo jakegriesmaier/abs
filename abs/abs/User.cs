@@ -20,7 +20,9 @@ namespace abs {
         }
 
 
-        public User() { }
+        public User(string name) {
+            this.username = name;
+        }
 
     }
 }

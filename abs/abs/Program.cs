@@ -92,15 +92,24 @@ namespace abs {
                 new KeyValuePair<string, string>("feedbackreps", "int"),
                 new KeyValuePair<string, string>("feedbackweight", "int")
             }));
-            
-            
+
+            db.query("INSERT INTO workoutdays VALUES('1234', 'Bob', '2018-01-05', 'chest', 'upperchest', 1);");
+            db.query("INSERT INTO workoutitems VALUES('5678', '1234', 'Barbell Bench Press ', 1);");
+            db.query("INSERT INTO workoutsets VALUES('5678', 2, 5, 15, TRUE, 1, 10, 50);");
+            db.query("INSERT INTO plans VALUES('Bob', '1,2,3,4,5,6,7', '', 'm');");
+            db.query("INSERT INTO users VALUES('Bob', '1', '2', '3');");
         }
 
         static void Main(string[] args) {
             Database db = new Database("Server=bennywwg.info;Port=5432;Username=postgres;Password=admin;Database=postgres");
 
             ResetDatabase(db);
-            
+
+            Plan pl = new Plan(db, new User("Bob"));
+
+            pl.store(new List<WorkoutDay> { pl.generateDay(1) });
+
+
             return;
             
             
@@ -110,22 +119,22 @@ namespace abs {
 
             planDefinition def = new planDefinition();
             Plan p = new Plan(def, db);
-            
-            for (int i = 0; i < 50; i++) {
-                List<workoutItem> day = p.generateDay(10);
-                Console.WriteLine(day.First().uuid + ", " + day.Last().uuid);
-                foreach (var item in day) {
-                    //Console.WriteLine("\t" + (item.ex.isCompound ? "yes " : "no  ") + item.ex.areaNumber + " " + item.ex.exerciseName);
-                    Console.WriteLine(item.readable(500));
-                }
-                Console.WriteLine();
-                Console.WriteLine();
-            }
+
+            //for (int i = 0; i < 50; i++) {
+            //    List<workoutItem> day = p.generateDay(10);
+            //    Console.WriteLine(day.First().uuid + ", " + day.Last().uuid);
+            //    foreach (var item in day) {
+            //        Console.WriteLine("\t" + (item.ex.isCompound ? "yes " : "no  ") + item.ex.areaNumber + " " + item.ex.exerciseName);
+            //        Console.WriteLine(item.readable(500));
+            //    }
+            //    Console.WriteLine();
+            //    Console.WriteLine();
+            //}
 
 
 
-            
-            
+
+
 
 
 
@@ -148,17 +157,6 @@ namespace abs {
 
 
             mpAuth lman = new mpAuth(db);
-            lman.add("weight", authToke => {
-                if (authToke.userid != "") {
-                    return new mpFunctionalGETableToken(() => {
-                        string query = "SELECT date, value FROM weight WHERE userid = '" + authToke.userid + "'";
-                        //query = "userid=" + authToke.userid +
-                        return new binaryData(queryResultToJSON(db.query(query)).json);
-                    });
-                } else {
-                    return new mpArray();
-                }
-            });
             lman.add("feedbackTarget", authToke => {
                 return new mpRestfulTarget(null, req => {
                     mpObject obj = mpJson.parse(req.data()) as mpObject;
@@ -168,7 +166,7 @@ namespace abs {
                         int exerciseIndex = (obj.getChild("exerciseIndex") as mpValue).data.asInt();
                         int difficulty = (obj.getChild("difficulty") as mpValue).data.asInt();
 
-                        workoutItem t = p.pastDays[0].Find(item => item.uuid == exerciseID);
+                        workoutItem t = p.previousDay.workoutItems.Find(item => item.uuid == exerciseID);
                         t.sets[exerciseIndex].feedback.difficulty = difficulty;
                     }
 
@@ -179,10 +177,6 @@ namespace abs {
 
             
 
-
-            mpBase.addProperty("userRecordings", new mpChildGetter(child => {
-                return queryResultToJSON(db.query("SELECT date, value FROM " + child + " WHERE userid = 'testid'"));
-            }));
 
             mpPageAssembler assembler = new mpPageAssembler(
                 new mpFile("../../Web/Templates/Template.html"),
@@ -207,35 +201,35 @@ namespace abs {
 
 
 
-            assembler.add("ss", new mpFunctionalGETableToken((rq) => {
-                string htmlRes = "";
+            //assembler.add("ss", new mpFunctionalGETableToken((rq) => {
+            //    string htmlRes = "";
 
-                var res = db.query("SELECT date, value FROM weight WHERE userid = '" + lman.checkRequest(rq).userid + "'");
-                List<binaryData> list = res["value"];
-                double min = 0;
-                double max = 0;
-                if (list != null && list.Count > 0) {
-                    min = res["value"].Select(data => double.Parse(data.asString())).Min();
-                    max = res["value"].Select(data => double.Parse(data.asString())).Max();
-                }
+            //    var res = db.query("SELECT date, value FROM weight WHERE userid = '" + lman.checkRequest(rq).userid + "'");
+            //    List<binaryData> list = res["value"];
+            //    double min = 0;
+            //    double max = 0;
+            //    if (list != null && list.Count > 0) {
+            //        min = res["value"].Select(data => double.Parse(data.asString())).Min();
+            //        max = res["value"].Select(data => double.Parse(data.asString())).Max();
+            //    }
 
-                Console.WriteLine("id:" + lman.checkRequest(rq).userid);
+            //    Console.WriteLine("id:" + lman.checkRequest(rq).userid);
 
-                htmlRes += "<div class='mpContentContainer'>" +
-                            "<div style = 'background-color: burlywood; display: flex; flex-direction: row; align-items: stretch; width: 100%; height: 10vw;'>" +
-                                    "<div id = 'min' style = 'text-align: center; line-height: 10vw; width: 100%; font-size: 72pt;' > " + min + " </div>" +
-                                    "<div id = 'max' style = 'text-align: center; line-height: 10vw; width: 100%; font-size: 72pt;' > " + max + " </div>" +
-                                "</div>" +
-                            "</div> ";
+            //    htmlRes += "<div class='mpContentContainer'>" +
+            //                "<div style = 'background-color: burlywood; display: flex; flex-direction: row; align-items: stretch; width: 100%; height: 10vw;'>" +
+            //                        "<div id = 'min' style = 'text-align: center; line-height: 10vw; width: 100%; font-size: 72pt;' > " + min + " </div>" +
+            //                        "<div id = 'max' style = 'text-align: center; line-height: 10vw; width: 100%; font-size: 72pt;' > " + max + " </div>" +
+            //                    "</div>" +
+            //                "</div> ";
 
-                return new mpResponse(new binaryData(htmlRes, binaryDataType.html), 200);
-            }), false, true);
+            //    return new mpResponse(new binaryData(htmlRes, binaryDataType.html), 200);
+            //}), false, true);
 
             assembler.add("exerciseViewer", new mpPageElement(new mpFile("../../Web/exerciseViewer.html"), new mpFile("../../Web/exerciseViewer.js")), true, false);
 
             assembler.add("exercisePanels", new mpFunctionalGETableToken((rq) => {
                 string workoutItems = "";
-                List<workoutItem> items = p.pastDays[0];
+                List<workoutItem> items = p.previousDay.workoutItems;
 
                 workoutItems += "<div id='exercisesTitle' style='border: 1px solid blue; margin: -1px; width: 20em; height: 2em; text-align: center; line-height: 2em;'>" + "Monday - " + items.First().ex.mainBodyPart + " & " + items.Last().ex.mainBodyPart + "</div>";
 

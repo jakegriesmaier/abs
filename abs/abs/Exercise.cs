@@ -85,29 +85,19 @@ namespace abs {
 
         public static HashSet<Exercise> getAllExercises(Database db) {
             var exercises = db.query("select * from allknownexercises");
-            List<binaryData> exercise = exercises["exercise"];
-            List<binaryData> mainbodypart = exercises["mainbodypart"];
-            List<binaryData> iscompound = exercises["iscompound"];
-            List<binaryData> areanumber = exercises["areanumber"];
-            List<binaryData> requiresweight = exercises["requiresweight"];
-            List<binaryData> equipmentrequired = exercises["equipmentrequired"];
-            List<binaryData> equipmentrequired2 = exercises["equipmentrequired2"];
-            List<binaryData> weightrequired = exercises["weightrequired"];
-            List<binaryData> isdoubleexercise = exercises["isdoubleexercise"];
-
             HashSet<Exercise> res = new HashSet<Exercise>();
 
-            for(int i = 0; i < exercise.Count; i++) {
+            for(int i = 0; i < exercises.Rows; i++) {
                 res.Add(new Exercise(
-                    exercise[i].asString(),
-                    mainbodypart[i].asString(),
-                    iscompound[i].asBool(),
-                    areanumber[i].asInt(),
-                    requiresweight[i].asBool(),
-                    equipmentrequired[i].asString(),
-                    equipmentrequired2[i].asString(),
-                    weightrequired[i].asString(),
-                    isdoubleexercise[i].asBool()
+                    exercises.GetField("exercise", i).asString(),
+                    exercises.GetField("mainbodypart", i).asString(),
+                    exercises.GetField("iscompound", i).asBool(),
+                    exercises.GetField("areanumber", i).asInt(),
+                    exercises.GetField("requiresweight", i).asBool(),
+                    exercises.GetField("equipmentrequired", i).asString(),
+                    exercises.GetField("equipmentrequired2", i).asString(),
+                    exercises.GetField("weightrequired", i).asString(),
+                    exercises.GetField("isdoubleexercise", i).asBool()
                 ));
             }
 
@@ -136,7 +126,7 @@ namespace abs {
             return res;
         }
         
-        public static Exercise getByName(this HashSet<Exercise> ex, string name) {
+        public static Exercise getByName(HashSet<Exercise> ex, string name) {
             foreach(Exercise e in ex) {
                 if (e.getExerciseName().Equals(name)) {
                     return e;

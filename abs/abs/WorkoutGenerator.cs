@@ -52,7 +52,7 @@ namespace abs {
             return mainBodyPart + " - " + subgroup;
         }
     }
-    public struct set {
+    public class set {
         public int reps;
         public int percent1RM;
         public TimeSpan restTime;
@@ -157,23 +157,24 @@ namespace abs {
         }
     }
 
-    public struct planDefinition {
+    public class planDefinition {
         public int[] workoutTimes;
         public List<string> equipmentAvailable;
         public char goal;
     }
 
-    public struct WorkoutDay {
+    public class WorkoutDay {
         public List<workoutItem> workoutItems;
         public string primaryGroup;
         public string secondaryGroup;
         public DateTime date;
+        public string uuid;
     }
 
     //TODO finish
     public class Plan {
         public HashSet<Exercise> allExercises;
-        public HashSet<WorkoutDay> oldDays;
+        public List<WorkoutDay> oldDays;
         public User user;
         public Database dat;
 
@@ -222,30 +223,33 @@ namespace abs {
 
             QueryResult days = dat.query("SELECT * FROM workoutdays WHERE associateduser='" + user.username + "';");
 
-            for (int i = 0; i < days.Columns; i++) {
+            oldDays = new List<WorkoutDay>();
+
+            for (int i = 0; i < days.Rows; i++) {
                 this.oldDays.Add(new WorkoutDay {
                     workoutItems = new List<workoutItem> { },
                     primaryGroup = days.GetField("primarygroup", i).asString(),
                     secondaryGroup = days.GetField("secondarygroup", i).asString(),
-                    date = days.GetField("workoutdate", i).asDate()
+                    date = days.GetField("workoutdate", i).asDate(),
+                    uuid = days.GetField("dayid", i).asString()
             });                    
             }
 
             foreach(WorkoutDay d in oldDays) {
-                QueryResult items = dat.query("SELECT * FROM workoutitems WHERE associatedday ='" + d.date +"';");
+                QueryResult items = dat.query("SELECT * FROM workoutitems WHERE associatedday ='" + d.uuid +"';");
 
                 for(int i = 0; i < items.Rows; i++) {
                     Exercise exercise = null;
                     String uuid = items.GetField("itemid", i).asString();
 
                     foreach (Exercise ex in allExercises) {
-                        if (ex.getExerciseName().Equals(items.GetField("exercisename", i))) {
+                        if (ex.getExerciseName() == items.GetField("exercisename", i).asString()) {
                             exercise = ex;
                         }
                     }
 
                     QueryResult setQuery = dat.query("SELECT * FROM workoutsets WHERE associateditem ='" + uuid + "';");
-                    List<set> exerciseSets = null;
+                    List<set> exerciseSets = new List<set>();
                     for(int j = 0; j < setQuery.Rows; j++) {
                         exerciseSets.Add(new set {
                             feedback = new setFeedback {
@@ -254,7 +258,9 @@ namespace abs {
                                 reps = setQuery.GetField("feedbackreps", j).asInt(),
                                 weight = setQuery.GetField("feedbackweight", j).asInt()
                             },
-
+                            percent1RM = setQuery.GetField("percent1rm", j).asInt(),
+                            reps = setQuery.GetField("reps", j).asInt(),
+                            restTime = TimeSpan.FromSeconds((float)setQuery.GetField("resttime", j).asDouble())
                         });
                     }
 
@@ -264,15 +270,46 @@ namespace abs {
                         sets = exerciseSets
                     });
                 }
-
-                oldDays.Add(d);
             }
 
 
         }
 
-        static void store() {
+        public void store(List<WorkoutDay> newDays) {
 
+            foreach (WorkoutDay day in newDays) {
+                string dayid = Guid.NewGuid().ToString();
+                string associatedUser = user.username;
+                string workoutdate = day.date.ToString("yyyy-MM-dd");
+                string primarygroup = day.primaryGroup;
+                string secondarygroup = day.secondaryGroup;
+                int itemcount = day.workoutItems.Count();
+                dat.query(String.Format("INSERT INTO workoutdays VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', {5});",
+                    dayid, associatedUser, workoutdate, primarygroup, secondarygroup, itemcount));
+
+                foreach (workoutItem item in day.workoutItems) {
+                    string itemid = item.uuid;
+                    string associatedday = dayid;
+                    string exercisename = item.ex.getExerciseName();
+                    int setcount = item.sets.Count();
+                    dat.query(String.Format("INSERT INTO workoutitems VALUES ('{0}', '{1}', '{2}', {3});",
+                        itemid, associatedday, exercisename, setcount));
+
+                    foreach (set s in item.sets) {
+                        string associateditem = item.uuid;
+                        int reps = s.reps;
+                        int percent1rm = s.percent1RM;
+                        float resttime = (float)s.restTime.TotalSeconds;
+                        bool feedbackcompleted = s.feedback.completed;
+                        int feedbackdifficulty = s.feedback.difficulty;
+                        int feedbackreps = s.feedback.reps;
+                        int feedbackweight = s.feedback.weight;
+
+                        dat.query(String.Format("INSERT INTO workoutsets VALUES ('{0}', {1}, {2}, {3}, {4}, {5}, {6}, {7});",
+                            associateditem, reps, percent1rm, resttime, feedbackcompleted, feedbackdifficulty, feedbackreps, feedbackweight));
+                    }
+                }
+            }
         }
 
 
@@ -286,13 +323,13 @@ namespace abs {
             throw new NotImplementedException();
         }
 
-        public List<List<workoutItem>> pastDays;
-        List<workoutItem> previousDay {
+
+        public WorkoutDay previousDay {
             get {
-                if (pastDays.Count > 0)
-                    return pastDays.Last();
+                if (oldDays.Count > 0)
+                    return oldDays.Last();
                 else
-                    return new List<workoutItem>();
+                    return new WorkoutDay {workoutItems = new List<workoutItem> { } };
             }
         }
 
@@ -329,23 +366,29 @@ namespace abs {
             subgroup = Exercise.getUnusedExercises(subgroup, usedExercises);
         }
 
-        public List<workoutItem> generateDay(int n) {
+        public WorkoutDay generateDay(int n) {
             //determine the amount of primary and secondary exercises to do
             int primaryCount = (int)(Math.Ceiling(n * 0.666666666) + 0.5);
             int secondaryCount = n - primaryCount;
 
 
             HashSet<string> excludedGroups = new HashSet<string>();
-            foreach(workoutItem item in previousDay) {
+            foreach(workoutItem item in previousDay.workoutItems) {
                 excludedGroups.Add(item.ex.mainBodyPart);
             }
 
-            List<workoutItem> res = new List<workoutItem>();
             HashSet<Exercise> usedExercises = new HashSet<Exercise>();
             
             string primary = getNextGroup(excludedGroups);
             excludedGroups.Add(primary);
             string secondary = getNextGroup(excludedGroups);
+
+            WorkoutDay res = new WorkoutDay { uuid = Guid.NewGuid().ToString(),
+                primaryGroup = primary,
+                secondaryGroup = secondary,
+                workoutItems = new List<workoutItem>(),
+                date = DateTime.Now
+            };
 
             HashSet<Exercise> available = allExercises;
 
@@ -389,7 +432,7 @@ namespace abs {
                     sectionExercies.Remove(selectedExercise);
 
 
-                    res.Add(new workoutItem {
+                    res.workoutItems.Add(new workoutItem {
                         uuid = Guid.NewGuid().ToString(),
                         ex = selectedExercise,
                         sets = new List<set> {
@@ -412,15 +455,12 @@ namespace abs {
                     });
                 }
             }
-
-            pastDays.Add(res);
-
+            
             return res;
         }
 
         public Plan(planDefinition definition, Database db) {
             this.definition = definition;
-            this.pastDays = new List<List<workoutItem>>();
 
             groups = new Dictionary<string, MuscleGroupQueue>();
             groups.Add("chest", new MuscleGroupQueue("chest", 1.0));
