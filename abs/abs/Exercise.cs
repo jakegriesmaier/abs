@@ -4,20 +4,6 @@ using System.Linq;
 
 namespace abs {
     public class Exercise {
-
-        public Exercise(string exerciseName) {
-            setExerciseName(exerciseName);
-            setMainBodyPart();
-            setIsCompound();
-            setAreaNumber();
-            setEquipmentRequired();
-            setEquipmentRequired2();
-            setWeightRequired();
-            setRequiresWeight();
-            setIsDoubleExercise();
-            this.youtube = "https://www.youtube.com/embed/qYV8zuz2qA0";
-        }
-
         private Exercise(string ExerciseName, string mainBodypart, bool isCompound, int areaNumber, bool requiresWeight, string equipmentRequired, string equipmentRequired2, string weightrequired, bool isDoubleExercise) {
             this.exerciseName = ExerciseName;
             this.mainBodyPart = mainBodypart;
@@ -46,28 +32,23 @@ namespace abs {
                     if (areaNumber == 1) return "Middle Chest";
                     else if (areaNumber == 2) return "Upper Chest";
                     else return "Lower Chest";
-                }
-                else if (mainBodyPart == "Legs") {
+                } else if (mainBodyPart == "Legs") {
                     if (areaNumber == 1) return "Quads";
                     else if (areaNumber == 2) return "Hamstrings";
                     else return "Calves";
-                }
-                else if (mainBodyPart == "Back") {
+                } else if (mainBodyPart == "Back") {
                     if (areaNumber == 1) return "Upper Back";
                     else if (areaNumber == 2) return "Lats";
                     else return "Lower Back";
-                }
-                else if (mainBodyPart == "Shoulders") {
+                } else if (mainBodyPart == "Shoulders") {
                     if (areaNumber == 1) return "Front Deltiods";
                     else if (areaNumber == 2) return "Lateral Deltoids";
                     else return "Rear Deltoids/Traps";
-                }
-                else if (mainBodyPart == "Arms") {
+                } else if (mainBodyPart == "Arms") {
                     if (areaNumber == 1) return "Biceps";
                     else if (areaNumber == 2) return "Triceps";
                     else return "Forearms";
-                }
-                else {
+                } else {
                     if (areaNumber == 1) return "Upper Abs";
                     else if (areaNumber == 2) return "Lower Abs";
                     else return "Obliques";
@@ -84,10 +65,10 @@ namespace abs {
         public string youtube;
 
         public static HashSet<Exercise> getAllExercises(Database db) {
-            var exercises = db.query("select * from allknownexercises");
+            var exercises = db.query("select * from exercises");
             HashSet<Exercise> res = new HashSet<Exercise>();
 
-            for(int i = 0; i < exercises.Rows; i++) {
+            for (int i = 0; i < exercises.Rows; i++) {
                 res.Add(new Exercise(
                     exercises.GetField("exercise", i).asString(),
                     exercises.GetField("mainbodypart", i).asString(),
@@ -117,21 +98,22 @@ namespace abs {
 
         public static HashSet<Exercise> availableWithEquipment(HashSet<Exercise> exercises, HashSet<string> equipmentAvailable) {
             HashSet<Exercise> res = new HashSet<Exercise>();
-            foreach(Exercise ex in exercises) {
-                if(equipmentAvailable.Contains(ex.equipmentRequired)) {
+            foreach (Exercise ex in exercises) {
+                if (equipmentAvailable.Contains(ex.equipmentRequired)) {
                     res.Add(ex);
                 }
             }
 
             return res;
         }
-        
+
         public static Exercise getByName(HashSet<Exercise> ex, string name) {
-            foreach(Exercise e in ex) {
-                if (e.getExerciseName().Equals(name)) {
+            foreach (Exercise e in ex) {
+                if (e.exerciseName.Equals(name)) {
                     return e;
                 }
-            } return null;
+            }
+            return null;
         }
 
         public static HashSet<Exercise> whereAreaIs(HashSet<Exercise> exercises, string mainbodypart) {
@@ -153,95 +135,17 @@ namespace abs {
             return new HashSet<Exercise>(exercises.Where(e => (e.areaNumber == subgroup)));
         }
 
-        public static HashSet<Exercise> onlyCompoundsInSubgroup (HashSet<Exercise> exercises, int subGroup) {
+        public static HashSet<Exercise> onlyCompoundsInSubgroup(HashSet<Exercise> exercises, int subGroup) {
             return new HashSet<Exercise>(exercises.Where(e => (e.areaNumber == subGroup && e.isCompound)));
         }
 
-        public static HashSet<Exercise> getUnusedExercises (HashSet<Exercise> allAvailableExercises, HashSet<Exercise> usedExercises) {
-            return new HashSet<Exercise>(allAvailableExercises.Where(e => !(usedExercises.Select(ex => ex.getExerciseName()).Contains(e.getExerciseName()))));
+        public static HashSet<Exercise> getUnusedExercises(HashSet<Exercise> allAvailableExercises, HashSet<Exercise> usedExercises) {
+            return new HashSet<Exercise>(allAvailableExercises.Where(e => !(usedExercises.Select(ex => ex.exerciseName).Contains(e.exerciseName))));
         }
 
-        public string getExerciseName() {
-            return this.exerciseName;
+        public mpObject toJSON() {
+            return new mpObject(new mpProperty("name", new mpValue(exerciseName)), new mpProperty("video", new mpValue(youtube)));
         }
-
-        public string getMainBodyPart() {
-            return this.mainBodyPart;
-        }
-
-        public bool getIsCompound() {
-            return this.isCompound;
-        }
-
-        public int getAreaNumber() {
-            return this.areaNumber;
-        }
-
-        public bool getRequiresWeight() {
-            return this.requiresWeight;
-        }
-
-        public string getEquipmentRequired() {
-            return this.equipmentRequired;
-        }
-
-        public string getEquipmentRequired2() {
-            return this.equipmentRequired2;
-        }
-
-        public string getWeightRequired() {
-            return this.weightRequired;
-        }
-
-        public bool getIsDoubleExercise() {
-            return this.isDoubleExercise;
-        }
-
-        public void setExerciseName(string exerciseName) {
-            this.exerciseName = exerciseName;
-        }
-
-        public void setMainBodyPart() {
-            this.mainBodyPart = db.query("SELECT iscompound FROM allknownexercises WHERE exercise = '" + exerciseName + "'").ToString();
-        }
-
-        public void setIsCompound() {
-                string temp = db.query("SELECT iscompound FROM allknownexercises WHERE exercise = '" + exerciseName + "' AND mainbodypart ='" + mainBodyPart + "'").ToString();
-            if (temp == "1") { this.isCompound = true; }
-            else { this.isCompound = false; }
-        }
-
-        public void setAreaNumber() {
-            string temp = db.query("SELECT areanumber FROM allknownexercises WHERE exercise = '" + exerciseName + "' AND mainbodypart ='" + mainBodyPart + "'").ToString();
-            if (temp == "1") this.areaNumber = 1;
-            else if (temp == "2") this.areaNumber = 2;
-            else this.areaNumber = 3;
-        }
-
-        public void setRequiresWeight() {
-            string temp = db.query("SELECT requiresweight FROM allknownexercises WHERE exercise = '" + exerciseName + "' AND mainbodypart ='" + mainBodyPart + "'").ToString();
-            if (temp == "1") { this.requiresWeight = true; } 
-            else { this.requiresWeight = false; }
-        }
-
-        public void setEquipmentRequired() {
-            this.equipmentRequired = db.query("SELECT equipmentrequired FROM allknownexercises WHERE exercise = '" + exerciseName + "' AND mainbodypart ='" + mainBodyPart + "'").ToString();
-        }/// <summary>
-        /// </summary>
-
-        public void setEquipmentRequired2() {
-            this.equipmentRequired2 = db.query("SELECT equipmentrequired2 FROM allknownexercises WHERE exercise = '" + exerciseName + "' AND mainbodypart ='" + mainBodyPart + "'").ToString();
-        }
-
-        public void setWeightRequired() {
-            this.weightRequired = db.query("SELECT weightrequired FROM allknownexercises WHERE exercise = '" + exerciseName + "' AND mainbodypart ='" + mainBodyPart + "'").ToString();
-        }
-
-        public void setIsDoubleExercise() {
-            string temp = db.query("SELECT isdoubleexercise FROM allknownexercises WHERE exercise = '" + exerciseName + "' AND mainbodypart ='" + mainBodyPart + "'").ToString();
-            if (temp == "1") { this.isDoubleExercise = true; } else { this.isDoubleExercise = false; }
-        }
-
     }
 
 }

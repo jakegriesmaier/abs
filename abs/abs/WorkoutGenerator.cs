@@ -56,63 +56,33 @@ namespace abs {
         public int reps;
         public int percent1RM;
         public TimeSpan restTime;
-        public setFeedback feedback;
-        public bool completed => feedback.completed;
-    }
-    public struct setFeedback {
-        //tier 0 feedback
-        public bool completed;
+        
+        public int repsCompleted;
 
-        //tier 1 feedback
-        public int difficulty;
-
-        //tier 2 feedback
-        public int reps;
-        public int weight;
+        public mpObject toJSON() {
+            return new mpObject(
+                new mpProperty("reps", new mpValue(reps)),
+                new mpProperty("percent1RM", new mpValue(percent1RM)),
+                new mpProperty("restTimeSeconds", new mpValue(restTime.TotalSeconds)),
+                new mpProperty("repsCompleted", new mpValue(repsCompleted))
+            );
+        }
     }
     public struct workoutItem {
         public string uuid;
         public Exercise ex;
         public List<set> sets;
-        public bool completed { get { foreach (set s in sets) { if (!s.completed) return false; } return true; } }
+        public int difficulty;
 
-        public string readable(int user1RM) {
-            StringBuilder res = new StringBuilder();
+        public mpObject toJSON() {
+            mpObject result = new mpObject();
 
-            for(int i = 0; i < sets.Count(); i++) {
-                set s = sets[i];
+            result.addProperty("uuid", new mpValue(uuid));
+            result.addProperty("exercise", ex.toJSON());
+            result.addProperty("sets", new mpArray(sets.Select(set => set.toJSON()).ToArray()));
+            result.addProperty("difficulty", new mpValue(difficulty));
 
-                string exDef = ex.exerciseName + " " + Util.percent1RM(s.percent1RM, user1RM) + "lb for " + s.reps + " " + (s.reps == 1 ? "rep" : "reps") + "\n";
-                string restDef = (s.restTime.TotalSeconds < 0) ? "Immediately " : "Rest " + s.restTime.TotalSeconds + " seconds\n";
-
-                res.Append(exDef);
-                if(i != sets.Count() - 1) res.Append(restDef);
-            }
-
-            return res.ToString();
-        }
-
-
-        public string title() {
-            return "<div id='" + uuid + "' class='mpExerciseTitle' ytLink='" + ex.youtube + "' completed='" + completed + "'>" + ex.exerciseName + "</div>";
-        }
-        public string html(int user1RM) {
-            StringBuilder res = new StringBuilder();
-
-            for (int i = 0; i < sets.Count(); i++) {
-                set s = sets[i];
-
-                string box = "<div style='background-color: red; display: inline-block; width: 10vw; height: 10vh; float: left;'> test </div>";
-
-                string exDef = "<div>" + ex.exerciseName + " " + Util.percent1RM(s.percent1RM, user1RM) + "lb for " + s.reps + " " + (s.reps == 1 ? "rep" : "reps") + "</div><br>";
-                string restDef = "<div>" + ((s.restTime.TotalSeconds < 0) ? "Immediately " : "Rest ") + s.restTime.TotalSeconds + " seconds </div><br>";
-
-                res.Append(box);
-                //res.Append(exDef);
-                //if (i != sets.Count() - 1) res.Append(restDef);
-            }
-
-            return res.ToString();
+            return result;
         }
     }
 
@@ -169,6 +139,18 @@ namespace abs {
         public string secondaryGroup;
         public DateTime date;
         public string uuid;
+
+        public mpObject toJSON() {
+            mpObject result = new mpObject();
+
+            result.addProperty("uuid", new mpValue(uuid));
+            result.addProperty("primaryGroup", new mpValue(primaryGroup));
+            result.addProperty("secondaryGroup", new mpValue(secondaryGroup));
+            result.addProperty("date", new mpValue(date.ToString("yyyy-MM-dd")));
+            result.addProperty("items", new mpArray(workoutItems.Select(item => item.toJSON()).ToArray()));
+
+            return result;
+        }
     }
 
     //TODO finish
@@ -243,7 +225,7 @@ namespace abs {
                     String uuid = items.GetField("itemid", i).asString();
 
                     foreach (Exercise ex in allExercises) {
-                        if (ex.getExerciseName() == items.GetField("exercisename", i).asString()) {
+                        if (ex.exerciseName == items.GetField("exercisename", i).asString()) {
                             exercise = ex;
                         }
                     }
@@ -252,22 +234,18 @@ namespace abs {
                     List<set> exerciseSets = new List<set>();
                     for(int j = 0; j < setQuery.Rows; j++) {
                         exerciseSets.Add(new set {
-                            feedback = new setFeedback {
-                                completed = setQuery.GetField("feedbackcompleted", j).asBool(),
-                                difficulty = setQuery.GetField("feedbackdifficulty", j).asInt(),
-                                reps = setQuery.GetField("feedbackreps", j).asInt(),
-                                weight = setQuery.GetField("feedbackweight", j).asInt()
-                            },
                             percent1RM = setQuery.GetField("percent1rm", j).asInt(),
                             reps = setQuery.GetField("reps", j).asInt(),
-                            restTime = TimeSpan.FromSeconds((float)setQuery.GetField("resttime", j).asDouble())
+                            restTime = TimeSpan.FromSeconds((float)setQuery.GetField("resttime", j).asDouble()),
+                            repsCompleted = setQuery.GetField("feedbackreps", j).asInt()
                         });
                     }
 
                     d.workoutItems.Add(new workoutItem {
                         uuid = uuid,
                         ex = exercise,
-                        sets = exerciseSets
+                        sets = exerciseSets,
+                        difficulty = items.GetField("feedbackdifficulty", i).asInt()
                     });
                 }
             }
@@ -290,23 +268,21 @@ namespace abs {
                 foreach (workoutItem item in day.workoutItems) {
                     string itemid = item.uuid;
                     string associatedday = dayid;
-                    string exercisename = item.ex.getExerciseName();
+                    string exercisename = item.ex.exerciseName;
                     int setcount = item.sets.Count();
-                    dat.query(String.Format("INSERT INTO workoutitems VALUES ('{0}', '{1}', '{2}', {3});",
-                        itemid, associatedday, exercisename, setcount));
+                    int difficulty = item.difficulty;
+                    dat.query(String.Format("INSERT INTO workoutitems VALUES ('{0}', '{1}', '{2}', {3}, {4});",
+                        itemid, associatedday, exercisename, setcount, difficulty));
 
                     foreach (set s in item.sets) {
                         string associateditem = item.uuid;
                         int reps = s.reps;
                         int percent1rm = s.percent1RM;
                         float resttime = (float)s.restTime.TotalSeconds;
-                        bool feedbackcompleted = s.feedback.completed;
-                        int feedbackdifficulty = s.feedback.difficulty;
-                        int feedbackreps = s.feedback.reps;
-                        int feedbackweight = s.feedback.weight;
+                        int feedbackreps = s.repsCompleted;
 
-                        dat.query(String.Format("INSERT INTO workoutsets VALUES ('{0}', {1}, {2}, {3}, {4}, {5}, {6}, {7});",
-                            associateditem, reps, percent1rm, resttime, feedbackcompleted, feedbackdifficulty, feedbackreps, feedbackweight));
+                        dat.query(String.Format("INSERT INTO workoutsets VALUES ('{0}', {1}, {2}, {3}, {4});",
+                            associateditem, reps, percent1rm, resttime, feedbackreps));
                     }
                 }
             }
