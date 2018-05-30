@@ -78,7 +78,7 @@ namespace abs {
 
             HashSet<Exercise> exercises = Exercise.getAllExercises(db);
 
-            Plan p = new Plan(db, new User("Bob"));
+            Plan p = new Plan(db, new User(db, "Bob", "123"));
 
             WorkoutDay day = p.generateDay(3);
 
@@ -99,6 +99,23 @@ namespace abs {
                     ),
                     new Func<System.Net.HttpListenerRequest, mpResponse>(
                         req => {
+                            string requestData = req.data();
+
+
+                            string username = "UserName";
+                            string salt = "someSalt";
+                            string password = "password";
+                            string hashedPassword = Util.hash(password + salt);
+
+
+                            mpObject requestJSON = (mpObject)mpJson.parse(requestData);
+
+                            string requestUsername = ((mpValue)requestJSON.getChild("username")).data.asString();
+                            string requestSalt = ((mpValue)requestJSON.getChild("salt")).data.asString();
+                            string requestHashedPassword = ((mpValue)requestJSON.getChild("hashedPassword")).data.asString();
+
+                            bool different = hashedPassword != requestHashedPassword;
+
                             Console.Write("Got Register Request... ");
                             Thread.Sleep(1000);
                             mpResponse res = mpResponse.success();

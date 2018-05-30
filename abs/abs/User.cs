@@ -20,9 +20,19 @@ namespace abs {
         }
 
 
-        public User(string name) {
-            this.username = name;
+        public User(Database db, string name, string password) {
+            username = name;
+            //db.query("SELECT")
+
         }
 
+    }
+
+    public class UserManager {
+        private List<User> users;
+
+        public User GetUser(string username, string password) {
+            return null;
+        }
     }
 }
