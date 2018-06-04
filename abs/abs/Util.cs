@@ -34,8 +34,12 @@ namespace abs {
 
         public static Random r;
         public static int rand(int max) {
-            if (r == null) r = new Random(54581);
+            if (r == null) r = new Random();
             return r.Next(max);
+        }
+        public static string randomHash() {
+            if (r == null) r = new Random();
+            return hash(r.Next().ToString());
         }
     }
 }

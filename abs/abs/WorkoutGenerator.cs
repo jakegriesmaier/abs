@@ -55,6 +55,7 @@ namespace abs {
     public class set {
         public int reps;
         public int percent1RM;
+        public bool doneWithRest = false;
         public TimeSpan restTime;
         
         public int repsCompleted;
@@ -64,6 +65,7 @@ namespace abs {
                 new mpProperty("reps", new mpValue(reps)),
                 new mpProperty("percent1RM", new mpValue(percent1RM)),
                 new mpProperty("restTimeSeconds", new mpValue(restTime.TotalSeconds)),
+                new mpProperty("doneWithRest", new mpValue(doneWithRest)),
                 new mpProperty("repsCompleted", new mpValue(repsCompleted))
             );
         }
@@ -74,11 +76,11 @@ namespace abs {
         public List<set> sets;
         public int difficulty;
 
-        public mpObject toJSON() {
+        public mpObject toJSON(User user) {
             mpObject result = new mpObject();
 
             result.addProperty("uuid", new mpValue(uuid));
-            result.addProperty("exercise", ex.toJSON());
+            result.addProperty("exercise", ex.toJSON(user));
             result.addProperty("sets", new mpArray(sets.Select(set => set.toJSON()).ToArray()));
             result.addProperty("difficulty", new mpValue(difficulty));
 
@@ -127,12 +129,6 @@ namespace abs {
         }
     }
 
-    public class planDefinition {
-        public int[] workoutTimes;
-        public List<string> equipmentAvailable;
-        public char goal;
-    }
-
     public class WorkoutDay {
         public List<workoutItem> workoutItems;
         public string primaryGroup;
@@ -140,14 +136,14 @@ namespace abs {
         public DateTime date;
         public string uuid;
 
-        public mpObject toJSON() {
+        public mpObject toJSON(User user) {
             mpObject result = new mpObject();
 
             result.addProperty("uuid", new mpValue(uuid));
             result.addProperty("primaryGroup", new mpValue(primaryGroup));
             result.addProperty("secondaryGroup", new mpValue(secondaryGroup));
             result.addProperty("date", new mpValue(date.ToString("yyyy-MM-dd")));
-            result.addProperty("items", new mpArray(workoutItems.Select(item => item.toJSON()).ToArray()));
+            result.addProperty("items", new mpArray(workoutItems.Select(item => item.toJSON(user)).ToArray()));
 
             return result;
         }
@@ -159,8 +155,6 @@ namespace abs {
         public List<WorkoutDay> oldDays;
         public User user;
         public Database dat;
-
-        public planDefinition definition;
 
         public Dictionary<string, MuscleGroupQueue> groups;
         public MuscleGroupQueue chest => groups["chest"];
@@ -183,27 +177,9 @@ namespace abs {
             groups.Add("abdominals", new MuscleGroupQueue("abdominals", 0.8));
 
             allExercises = Exercise.getAllExercises(dat);
+            
 
-            QueryResult res = dat.query("SELECT * FROM plans WHERE associateduser='" + user.username + "';");
-
-            if (res.Columns == 0) {
-                this.definition = new planDefinition {
-                    workoutTimes = new int[] { 0, 0, 0, 0, 0, 0, 0 },
-                    equipmentAvailable = new List<string> { },
-                    goal = 'm'
-                };
-
-                return;
-
-            } else {
-                this.definition = new planDefinition {
-                    workoutTimes = res.GetField("workouttimes", 0).asString().Split(',').Select(str => int.Parse(str)).ToArray(),
-                    equipmentAvailable = res.GetField("equipmentavailable", 0).asString().Split(',').ToList(),
-                    goal = res.GetField("goal", 0).asString().First()//need as char in monopage @quinn :(
-                };
-            }
-
-            QueryResult days = dat.query("SELECT * FROM workoutdays WHERE associateduser='" + user.username + "';");
+            QueryResult days = dat.query("SELECT * FROM workoutdays WHERE associateduser='" + user.email + "';");
 
             oldDays = new List<WorkoutDay>();
 
@@ -249,15 +225,13 @@ namespace abs {
                     });
                 }
             }
-
-
         }
 
+        
         public void store(List<WorkoutDay> newDays) {
-
             foreach (WorkoutDay day in newDays) {
                 string dayid = Guid.NewGuid().ToString();
-                string associatedUser = user.username;
+                string associatedUser = user.email;
                 string workoutdate = day.date.ToString("yyyy-MM-dd");
                 string primarygroup = day.primaryGroup;
                 string secondarygroup = day.secondaryGroup;
@@ -435,9 +409,7 @@ namespace abs {
             return res;
         }
 
-        public Plan(planDefinition definition, Database db) {
-            this.definition = definition;
-
+        public Plan(Database db) {
             groups = new Dictionary<string, MuscleGroupQueue>();
             groups.Add("chest", new MuscleGroupQueue("chest", 1.0));
             groups.Add("back", new MuscleGroupQueue("back", 1.0));

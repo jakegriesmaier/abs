@@ -26,6 +26,7 @@ namespace abs {
 
         public string exerciseName;
         public string mainBodyPart { get; private set; }
+        public int areaNumber;
         public string specifiedArea {
             get {
                 if (mainBodyPart == "Chest") {
@@ -56,7 +57,6 @@ namespace abs {
             }
         }
         public bool isCompound;
-        public int areaNumber;
         public bool requiresWeight;
         public string equipmentRequired;
         public string equipmentRequired2;
@@ -143,8 +143,15 @@ namespace abs {
             return new HashSet<Exercise>(allAvailableExercises.Where(e => !(usedExercises.Select(ex => ex.exerciseName).Contains(e.exerciseName))));
         }
 
-        public mpObject toJSON() {
-            return new mpObject(new mpProperty("name", new mpValue(exerciseName)), new mpProperty("video", new mpValue(youtube)));
+        public mpObject toJSON(User user) {
+            return new mpObject(
+               new mpProperty("name", new mpValue(exerciseName)), 
+               new mpProperty("video", new mpValue(youtube)),
+               new mpProperty("user1RM", new mpValue(user.getExercise1RM(exerciseName))),
+               new mpProperty("recommendedCalibrationWeight", new mpValue(25)),
+               new mpProperty("calibrationWeight", new mpValue(25)),
+               new mpProperty("calibrationReps", new mpValue(-1)),
+               new mpProperty("calibrationWeightEntered", new mpValue(!(user.getExercise1RM(exerciseName) < 0))));
         }
     }
 

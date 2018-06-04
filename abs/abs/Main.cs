@@ -12,28 +12,16 @@ namespace abs {
             //refresh users table
             db.deleteTableIfExists("users");
             db.createTableIfNeeded("users", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
-                new KeyValuePair<string, string>("username", "text"),
                 new KeyValuePair<string, string>("email", "text"),
                 new KeyValuePair<string, string>("salt", "text"),
-                new KeyValuePair<string, string>("password", "text")
+                new KeyValuePair<string, string>("passwordHashHash", "text")
             }));
 
             db.deleteTableIfExists("userinfo");
             db.createTableIfNeeded("userinfo", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
-                new KeyValuePair<string, string>("associateduser", "text"),
-                new KeyValuePair<string, string>("birthday", "text"),
-                new KeyValuePair<string, string>("gender", "char(1)"),
-                new KeyValuePair<string, string>("onerepmax", "int"),
-                new KeyValuePair<string, string>("experience", "int"),
-                new KeyValuePair<string, string>("exerciseinfo","text")
-            }));
-
-            db.deleteTableIfExists("plans");
-            db.createTableIfNeeded("plans", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
-                new KeyValuePair<string, string>("associateduser", "text"),
-                new KeyValuePair<string, string>("workouttimes", "text"),
-                new KeyValuePair<string, string>("equipmentavailable", "text"),
-                new KeyValuePair<string, string>("goal", "char(1)")
+                new KeyValuePair<string, string>("email", "text"),
+                new KeyValuePair<string, string>("user1rms", "text"),
+                
             }));
 
             db.deleteTableIfExists("workoutdays");
@@ -64,11 +52,9 @@ namespace abs {
                 new KeyValuePair<string, string>("feedbackreps", "int"),
             }));
 
-            db.query("INSERT INTO workoutdays VALUES('1234', 'Bob', '2018-01-05', 'chest', 'upperchest', 1);");
+            db.query("INSERT INTO workoutdays VALUES('1234', 'bob@bob.com', '2018-01-05', 'chest', 'upperchest', 1);");
             db.query("INSERT INTO workoutitems VALUES('5678', '1234', 'Barbell Bench Press ', 1, 0);");
             db.query("INSERT INTO workoutsets VALUES('5678', 10, 75, 30, 9);");
-            db.query("INSERT INTO plans VALUES('Bob', '1,2,3,4,5,6,7', '', 'm');"); //bobs workout plan
-            db.query("INSERT INTO users VALUES('Bob', 'bob@bob.com', 'seasoning', '36d85e');"); //bobs 
         }
 
 
@@ -76,14 +62,23 @@ namespace abs {
             Database db = new Database("Server=localhost;Port=5432;Username=postgres;Password=root;Database=postgres");
             ResetDatabase(db);
 
+            UserManager manager = new UserManager(db);
+
+            manager.createUser("bob@bob.com", Util.hash("password" + "bob@bob.com"));
+
+            manager.createUser("test@abc.com", Util.hash("password" + "bob@bob.com"));
+
+            manager.deleteUser("test@abc.com", Util.hash("password" + "bob@bob.com"));
+
+            manager.clearCache();
+
+            var found = manager.getUser("bob@bob.com", Util.hash("password" + "bob@bob.com"));
+
             HashSet<Exercise> exercises = Exercise.getAllExercises(db);
 
-            Plan p = new Plan(db, new User(db, "Bob", "123"));
+            Plan p = new Plan(db, new User(db, "bob@bob.com", "salt", Util.hash("password" + "salt")));
 
             WorkoutDay day = p.generateDay(3);
-
-            String str = day.toJSON().ToString();
-            File.WriteAllText("D:\\Desktop\\jsonTest.txt", str);
 
             mpBase root = new mpBase();
 
@@ -99,29 +94,31 @@ namespace abs {
                     ),
                     new Func<System.Net.HttpListenerRequest, mpResponse>(
                         req => {
+                            Console.WriteLine("Accout Create Request...");
+
                             string requestData = req.data();
+                            string requestEmail = "", requestPasswordEmailHash = "";
 
+                            try {
+                                mpObject requestJSON = (mpObject)mpJson.parse(requestData);
 
-                            string username = "UserName";
-                            string salt = "someSalt";
-                            string password = "password";
-                            string hashedPassword = Util.hash(password + salt);
+                                requestEmail = ((mpValue)requestJSON.getChild("email")).data.asString();
+                                requestPasswordEmailHash = ((mpValue)requestJSON.getChild("passwordEmailHash")).data.asString();
 
+                            } catch (Exception ex) {
+                                Console.WriteLine("Account Creation Error:" + ex.Message);
+                                return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
+                            }
 
-                            mpObject requestJSON = (mpObject)mpJson.parse(requestData);
+                            try {
+                                manager.createUser(requestEmail, requestPasswordEmailHash);
+                            } catch (Exception ex) {
+                                Console.WriteLine("Account Creation Error:" + ex.Message);
+                                return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
+                            }
 
-                            string requestUsername = ((mpValue)requestJSON.getChild("username")).data.asString();
-                            string requestSalt = ((mpValue)requestJSON.getChild("salt")).data.asString();
-                            string requestHashedPassword = ((mpValue)requestJSON.getChild("hashedPassword")).data.asString();
-
-                            bool different = hashedPassword != requestHashedPassword;
-
-                            Console.Write("Got Register Request... ");
-                            Thread.Sleep(1000);
-                            mpResponse res = mpResponse.success();
-                            res.response = new binaryData("[\"abc\"]");
-                            Console.WriteLine("Returning");
-                            return res;
+                            Console.WriteLine("Account Created Correctly");
+                            return new mpResponse(new binaryData("{\"good\":true, \"message\":\"Account Created\"}"), 200);
                         }
                     )
                 )
@@ -136,9 +133,31 @@ namespace abs {
                     ),
                     new Func<System.Net.HttpListenerRequest, mpResponse>(
                         req => {
-                            mpResponse res = mpResponse.success();
-                            res.response = new binaryData("LOGIN POST RESPONSE");
-                            return res;
+                            Console.WriteLine("Login Request...");
+
+                            string requestData = req.data();
+                            string requestEmail = "", requestPasswordEmailHash = "";
+
+                            try {
+                                mpObject requestJSON = (mpObject)mpJson.parse(requestData);
+
+                                requestEmail = ((mpValue)requestJSON.getChild("email")).data.asString();
+                                requestPasswordEmailHash = ((mpValue)requestJSON.getChild("passwordEmailHash")).data.asString();
+
+                            } catch (Exception ex) {
+                                Console.WriteLine("Login Error: " + ex.Message);
+                                return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
+                            }
+
+                            try {
+                                manager.getUser(requestEmail, requestPasswordEmailHash);
+                            } catch (Exception ex) {
+                                Console.WriteLine("Login Error: " + ex.Message);
+                                return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
+                            }
+
+                            Console.WriteLine("Login Valid");
+                            return new mpResponse(new binaryData("{\"good\":true, \"message\":\"Credentials Valid\"}"), 200);
                         }
                     )
                 )
@@ -153,12 +172,35 @@ namespace abs {
                     ),
                     new Func<System.Net.HttpListenerRequest, mpResponse>(
                         req => {
-                            Console.Write("Requested...");
-                            Thread.Sleep(2000);
-                            Console.WriteLine("Responded!");
-                            mpResponse res = mpResponse.success();
-                            res.response = new binaryData(str);
-                            return res;
+                            Console.Write("Exercise Data Requested...");
+
+                            string requestData = req.data();
+                            string requestEmail = "", requestPasswordEmailHash = "";
+                            int requestNumItems = -1;
+
+                            try {
+                                mpObject requestJSON = (mpObject)mpJson.parse(requestData);
+
+                                requestEmail = ((mpValue)requestJSON.getChild("email")).data.asString();
+                                requestPasswordEmailHash = ((mpValue)requestJSON.getChild("passwordEmailHash")).data.asString();
+                                requestNumItems = ((mpValue)requestJSON.getChild("numItems")).data.asInt();
+                            } catch (Exception ex) {
+                                Console.WriteLine("Exercise Request Error: " + ex.Message);
+                                return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
+                            }
+
+                            try {
+                                User user = manager.getUser(requestEmail, requestPasswordEmailHash);
+                                
+                                mpResponse res = mpResponse.success();
+                                res.response = new binaryData(p.generateDay(requestNumItems).toJSON(user).ToString());
+
+                                Console.WriteLine("Responded! (user = " + requestEmail + ")");
+                                return res;
+                            } catch(Exception ex) {
+                                Console.WriteLine("Exercise Request Error: " + ex.Message);
+                                return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
+                            }
                         }
                     )
                 )
