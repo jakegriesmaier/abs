@@ -59,20 +59,10 @@ namespace abs {
 
 
         static void Main(string[] args) {
-            Database db = new Database("Server=localhost;Port=5432;Username=postgres;Password=root;Database=postgres");
+            Database db = new Database("Server=localhost;Port=5432;Username=postgres;Password=postpass;Database=postgres");
             ResetDatabase(db);
 
             UserManager manager = new UserManager(db);
-
-            manager.createUser("bob@bob.com", Util.hash("password" + "bob@bob.com"));
-
-            manager.createUser("test@abc.com", Util.hash("password" + "bob@bob.com"));
-
-            manager.deleteUser("test@abc.com", Util.hash("password" + "bob@bob.com"));
-
-            manager.clearCache();
-
-            var found = manager.getUser("bob@bob.com", Util.hash("password" + "bob@bob.com"));
 
             HashSet<Exercise> exercises = Exercise.getAllExercises(db);
 
