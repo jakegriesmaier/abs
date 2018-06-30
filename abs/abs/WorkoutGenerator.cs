@@ -273,16 +273,6 @@ namespace abs {
             throw new NotImplementedException();
         }
 
-
-        public WorkoutDay previousDay {
-            get {
-                if (oldDays.Count > 0)
-                    return oldDays.Last();
-                else
-                    return new WorkoutDay {workoutItems = new List<workoutItem> { } };
-            }
-        }
-
         string getNextGroup(HashSet<string> excludedGroups) {
             //find the lowest timePutIn of any non-excluded groups
             if (excludedGroups.Count() > 5) throw new Exception();
@@ -298,8 +288,6 @@ namespace abs {
             
             return lowestGroup;
         }
-
-        
 
         //pass in primary or secondary exercise list
         public void exercisesToUse(HashSet<Exercise> subgroup, HashSet<Exercise> compounds, HashSet<Exercise> usedExercises, List<workoutItem> res, bool containsComp, string pOrS) {
@@ -409,16 +397,15 @@ namespace abs {
             return res;
         }
 
-        public Plan(Database db) {
-            groups = new Dictionary<string, MuscleGroupQueue>();
-            groups.Add("chest", new MuscleGroupQueue("chest", 1.0));
-            groups.Add("back", new MuscleGroupQueue("back", 1.0));
-            groups.Add("legs", new MuscleGroupQueue("legs", 1.0));
-            groups.Add("shoulders", new MuscleGroupQueue("shoulders", 0.8));
-            groups.Add("arms", new MuscleGroupQueue("arms", 0.8));
-            groups.Add("abdominals", new MuscleGroupQueue("abdominals", 0.8));
-
-            allExercises = Exercise.getAllExercises(db);
+        public workoutItem findItem(string uuid) {
+            for(int i = 0; i < oldDays.Count; i++) {
+                for(int u = 0; u < oldDays[i].workoutItems.Count; u++) {
+                    if(oldDays[i].workoutItems[u].uuid == uuid) {
+                        return oldDays[i].workoutItems[u];
+                    }
+                }
+            }
+            return null;
         }
     }
 

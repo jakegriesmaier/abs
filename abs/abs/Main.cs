@@ -197,56 +197,50 @@ namespace abs {
             );
 
             root.addProperty("exercise-feedback",
-              new mpRestfulTarget(
-                  new Func<System.Net.HttpListenerRequest, mpResponse>(
-                      req => {
-                          return mpResponse.empty400();
-                      }
-                  ),
-                  new Func<System.Net.HttpListenerRequest, mpResponse>(
-                      req => {
-                      Console.Write("Exercise Feedback Data Requested...");
+                new mpRestfulTarget(
+                    new Func<System.Net.HttpListenerRequest, mpResponse>(
+                        req => {
+                            return mpResponse.empty400();
+                        }
+                    ),
+                    new Func<System.Net.HttpListenerRequest, mpResponse>(
+                        req => {
+                            Console.Write("Exercise Feedback Data Requested...");
 
-                      string requestData = req.data();
-                      string requestEmail = "", requestPasswordEmailHash = "";
-                      mpObject feedbackItem = null;
+                            string requestData = req.data();
+                            string requestEmail = "", requestPasswordEmailHash = "";
+                            mpObject feedbackItem = null;
 
-                      try {
-                          mpObject requestJSON = (mpObject)mpJson.parse(requestData);
+                            try
+                            {
+                                mpObject requestJSON = (mpObject)mpJson.parse(requestData);
 
-                          requestEmail = ((mpValue)requestJSON.getChild("email")).data.asString();
-                          requestPasswordEmailHash = ((mpValue)requestJSON.getChild("passwordEmailHash")).data.asString();
-                          feedbackItem = ((mpObject)requestJSON.getChild("feedbackItem"));
-                          Plan plan = new Plan(db, manager.getUser(requestEmail, requestPasswordEmailHash));
-                          string uuid = ((mpValue)feedbackItem.getChild("uuid")).data.asString();
-                          workoutItem ex = plan.FindItem(uuid);
-                          ex.difficulty = ((mpValue)feedbackItem.getChild("difficulty")).data.asInt();
-                              mpArray setInfo = ((mpArray)feedbackItem.getChild("sets"));
-                              for(int i = 0; i < setInfo.allChildren.Count; i++) {
-                                  try {
-                                      ex.sets[i].repsCompleted = ((mpValue)((mpObject)setInfo[i]).getChild("repsCompleted")).data.asInt();
-                                      ex.sets[i].doneWithRest = true;
-                                  }catch(Exception e) { };
-                                  
-                              }
-                          } catch (Exception ex) {
-                              Console.WriteLine("Exercise Request Error: " + ex.Message);
-                              return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
-                          }
+                                requestEmail = ((mpValue)requestJSON.getChild("email")).data.asString();
+                                requestPasswordEmailHash = ((mpValue)requestJSON.getChild("passwordEmailHash")).data.asString();
+                                feedbackItem = ((mpObject)requestJSON.getChild("feedbackItem"));
+                                Plan plan = new Plan(db, manager.getUser(requestEmail, requestPasswordEmailHash));
+                                string uuid = ((mpValue)feedbackItem.getChild("uuid")).data.asString();
+                                workoutItem ex = plan.findItem(uuid);
+                                ex.difficulty = ((mpValue)feedbackItem.getChild("difficulty")).data.asInt();
+                                mpArray setInfo = ((mpArray)feedbackItem.getChild("sets"));
+                                for (int i = 0; i < setInfo.allChildren.Count; i++)
+                                {
+                                    try
+                                    {
+                                        ex.sets[i].repsCompleted = ((mpValue)((mpObject)setInfo[i]).getChild("repsCompleted")).data.asInt();
+                                        ex.sets[i].doneWithRest = true;
+                                    }
+                                    catch (Exception e) { };
 
-                          try {
-                              User user = manager.getUser(requestEmail, requestPasswordEmailHash);
-
-                              mpResponse res = mpResponse.success();
-                              res.response = new binaryData(p.generateDay(requestNumItems).toJSON(user).ToString());
-
-                              Console.WriteLine("Responded! (user = " + requestEmail + ")");
-                              return res;
-                          } catch (Exception ex) {
-                              Console.WriteLine("Exercise Feedback Request Error: " + ex.Message);
-                              return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
-                          }
-                      }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("Exercise Request Error: " + ex.Message);
+                                return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
+                            }
+                            return mpResponse.empty200();
+                        }
                   )
               )
           );
