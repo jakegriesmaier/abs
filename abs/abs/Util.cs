@@ -5,8 +5,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-using HashLib;
-
 namespace abs {
     public static class Util {
         public static int percent1RM(int percent, int weight) {
