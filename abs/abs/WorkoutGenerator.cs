@@ -331,14 +331,11 @@ namespace abs {
 
         public WorkoutDay generateDay(int n) {
             //determine the amount of primary and secondary exercises to do
-            int primaryCount = (int)(Math.Ceiling(n * 0.666666666) + 0.5);
+              int primaryCount = (int)(Math.Ceiling(n * 0.666666666) + 0.5);
             int secondaryCount = n - primaryCount;
 
 
-            HashSet<string> excludedGroups = new HashSet<string>();
-            foreach(workoutItem item in previousDay.workoutItems) {
-                excludedGroups.Add(item.ex.mainBodyPart);
-            }
+            HashSet<string> excludedGroups = new HashSet<string>(); //note: eliminate this later on
 
             HashSet<Exercise> usedExercises = new HashSet<Exercise>();
             
@@ -423,43 +420,7 @@ namespace abs {
                     }
                 }
             }
-            return null;
-        }
-    }
-
-
-    //TODO create a list of possible exercises based on what equipment the user has avaiable 
-    public class UsersPossibleExerciseList {
-
-        static List<Exercise> Exercises = new List<Exercise>();
-        private string exerciseName;
-        private int numExercises;
-
-
-        public UsersPossibleExerciseList() {
-            this.numExercises = 0;
-        }
-
-        public string exercisesAsHTML() {
-            throw new NotImplementedException();
-        }
-
-        public void sortExercisesByEquipment(string[] equipmentAvailable, string[] equipmentAvailable2, string[] weights) {
-            throw new NotImplementedException();
-        }
-
-        public void addExercise(Exercise exercise) {
-            Exercises.Add(exercise);
-            numExercises++;
-        }
-
-        public void removeExercise(Exercise exercise) {
-            Exercises.Remove(exercise);
-            numExercises--;
-        }
-
-        public List<Exercise> getExercises() {
-            return Exercises;
+            throw new Exception("couldn't find workout item");
         }
     }
 
@@ -485,11 +446,29 @@ namespace abs {
     /// </summary>
     public static class Styles {
 
+        public static readonly SetDetail[] FiveByTen = { TenRepSet, TenRepSet, TenRepSet, TenRepSet, TenRepSet };
+        public static readonly SetDetail[] FiveByFive = { FiveRepSet, FiveRepSet, FiveRepSet, FiveRepSet, FiveRepSet };
+        public static readonly SetDetail[] FiveByFifteen = { FifteenRepSet, FifteenRepSet, FifteenRepSet, FifteenRepSet, FifteenRepSet };
+        public static readonly SetDetail[] FivePyramid = { FifteenRepSet, TenRepSet, FiveRepSet, TenRepSet, FifteenRepSet };
+        public static readonly SetDetail[] FiveReversePyramid = { FiveRepSet, TenRepSet, FifteenRepSet, TenRepSet, FiveRepSet };
+        public static readonly SetDetail[] FiveLatter = { FiveRepSet, FiveRepSet, TenRepSet, TenRepSet, FifteenRepSet };
+        public static readonly SetDetail[] FiveReverseLatter = { FifteenRepSet, FifteenRepSet, TenRepSet, TenRepSet, FiveRepSet };
+        public static readonly SetDetail[] FiveDeload = { DeloadSet, DeloadSet, DeloadSet, DeloadSet, DeloadSet };
+
+        public static readonly SetDetail[] ThreeByTen = { TenRepSet, TenRepSet, TenRepSet };
+        public static readonly SetDetail[] ThreeByFive = { FiveRepSet, FiveRepSet, FiveRepSet };
+        public static readonly SetDetail[] ThreeByFifteen = { FifteenRepSet, FifteenRepSet, FifteenRepSet };
+        public static readonly SetDetail[] ThreePyramid = { TenRepSet, FifteenRepSet, TenRepSet };
+        public static readonly SetDetail[] ThreeReversePyramid = { FifteenRepSet, TenRepSet, FifteenRepSet };
+        public static readonly SetDetail[] ThreeLatter = { FiveRepSet, TenRepSet, FifteenRepSet };
+        public static readonly SetDetail[] ThreeReverseLatter = { FifteenRepSet, TenRepSet, FiveRepSet };
+        public static readonly SetDetail[] ThreeDeload = { DeloadSet, DeloadSet, DeloadSet };
+
         #region SetTypes
-        public static SetDetail TenRepSet = new SetDetail { reps = 10, Percent1RM = 71, restTime = 60 };
-        public static SetDetail FiveRepSet = new SetDetail { reps = 5, Percent1RM = 81, restTime = 90 };
-        public static SetDetail FifteenRepSet = new SetDetail { reps = 15, Percent1RM = 64, restTime = 45 };
-        public static SetDetail DeloadSet = new SetDetail { reps = 10, Percent1RM = 64, restTime = 60 };
+        public static readonly SetDetail TenRepSet = new SetDetail { reps = 10, Percent1RM = 71, restTime = 60 };
+        public static readonly SetDetail FiveRepSet = new SetDetail { reps = 5, Percent1RM = 81, restTime = 90 };
+        public static readonly SetDetail FifteenRepSet = new SetDetail { reps = 15, Percent1RM = 64, restTime = 45 };
+        public static readonly SetDetail DeloadSet = new SetDetail { reps = 10, Percent1RM = 64, restTime = 60 };
         #endregion
 
         #region FiveSetters
@@ -503,14 +482,7 @@ namespace abs {
             new SetDetails{ sets = FiveReverseLatter, weightedLikelihood = 3},
             new SetDetails{ sets = FiveDeload, weightedLikelihood = 1}
         };
-        public static readonly SetDetail[] FiveByTen = { TenRepSet, TenRepSet, TenRepSet, TenRepSet, TenRepSet };
-        public static readonly SetDetail[] FiveByFive = { FiveRepSet, FiveRepSet, FiveRepSet, FiveRepSet, FiveRepSet };
-        public static readonly SetDetail[] FiveByFifteen = { FifteenRepSet, FifteenRepSet, FifteenRepSet, FifteenRepSet, FifteenRepSet };
-        public static readonly SetDetail[] FivePyramid = { FifteenRepSet, TenRepSet, FiveRepSet, TenRepSet, FifteenRepSet };
-        public static readonly SetDetail[] FiveReversePyramid = { FiveRepSet, TenRepSet, FifteenRepSet, TenRepSet, FiveRepSet };
-        public static readonly SetDetail[] FiveLatter = { FiveRepSet, FiveRepSet, TenRepSet, TenRepSet, FifteenRepSet };
-        public static readonly SetDetail[] FiveReverseLatter = { FifteenRepSet, FifteenRepSet, TenRepSet, TenRepSet, FiveRepSet };
-        public static readonly SetDetail[] FiveDeload = { DeloadSet, DeloadSet, DeloadSet, DeloadSet, DeloadSet };
+        
         #endregion
 
         #region ThreeSetters
@@ -524,14 +496,6 @@ namespace abs {
             new SetDetails{ sets = ThreeReverseLatter, weightedLikelihood = 3},
             new SetDetails{ sets = ThreeDeload, weightedLikelihood = 1}
         };
-        public static readonly SetDetail[] ThreeByTen = { TenRepSet, TenRepSet, TenRepSet };
-        public static readonly SetDetail[] ThreeByFive = { FiveRepSet, FiveRepSet, FiveRepSet };
-        public static readonly SetDetail[] ThreeByFifteen = { FifteenRepSet, FifteenRepSet, FifteenRepSet };
-        public static readonly SetDetail[] ThreePyramid = { TenRepSet, FifteenRepSet, TenRepSet };
-        public static readonly SetDetail[] ThreeReversePyramid = { FifteenRepSet, TenRepSet, FifteenRepSet };
-        public static readonly SetDetail[] ThreeLatter = { FiveRepSet, TenRepSet, FifteenRepSet };
-        public static readonly SetDetail[] ThreeReverseLatter = { FifteenRepSet, TenRepSet, FiveRepSet };
-        public static readonly SetDetail[] ThreeDeload = { DeloadSet, DeloadSet, DeloadSet };
         #endregion
 
     }

@@ -6,9 +6,12 @@ using System.Threading;
 
 using monopage;
 
-namespace abs {
-    class Abs {
-        static void ResetDatabase(Database db) {
+namespace abs
+{
+    class Abs
+    {
+        static void ResetDatabase(Database db)
+        {
             //refresh users table
             db.deleteTableIfExists("users");
             db.createTableIfNeeded("users", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
@@ -21,7 +24,7 @@ namespace abs {
             db.createTableIfNeeded("userinfo", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
                 new KeyValuePair<string, string>("email", "text"),
                 new KeyValuePair<string, string>("user1rms", "text"),
-                
+
             }));
 
             db.deleteTableIfExists("workoutdays");
@@ -58,8 +61,15 @@ namespace abs {
         }
 
 
-        static void Main(string[] args) {
-            Database db = new Database("Server=localhost;Port=5432;Username=postgres;Password=postpass;Database=postgres");
+        static void Main(string[] args)
+        {
+            string host = "localhost";
+            if(args.Length >= 1) {
+                host = args[0];
+            }
+            string connection = "Server=" + host + ";Port=5432;Username=postgres;Password=postpass;Database=postgres";
+
+            Database db = new Database(connection);
             ResetDatabase(db);
 
             UserManager manager = new UserManager(db);
@@ -89,20 +99,26 @@ namespace abs {
                             string requestData = req.data();
                             string requestEmail = "", requestPasswordEmailHash = "";
 
-                            try {
+                            try
+                            {
                                 mpObject requestJSON = (mpObject)mpJson.parse(requestData);
 
                                 requestEmail = ((mpValue)requestJSON.getChild("email")).data.asString();
                                 requestPasswordEmailHash = ((mpValue)requestJSON.getChild("passwordEmailHash")).data.asString();
 
-                            } catch (Exception ex) {
+                            }
+                            catch (Exception ex)
+                            {
                                 Console.WriteLine("Account Creation Error:" + ex.Message);
                                 return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
                             }
 
-                            try {
+                            try
+                            {
                                 manager.createUser(requestEmail, requestPasswordEmailHash);
-                            } catch (Exception ex) {
+                            }
+                            catch (Exception ex)
+                            {
                                 Console.WriteLine("Account Creation Error:" + ex.Message);
                                 return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
                             }
@@ -128,20 +144,26 @@ namespace abs {
                             string requestData = req.data();
                             string requestEmail = "", requestPasswordEmailHash = "";
 
-                            try {
+                            try
+                            {
                                 mpObject requestJSON = (mpObject)mpJson.parse(requestData);
 
                                 requestEmail = ((mpValue)requestJSON.getChild("email")).data.asString();
                                 requestPasswordEmailHash = ((mpValue)requestJSON.getChild("passwordEmailHash")).data.asString();
 
-                            } catch (Exception ex) {
+                            }
+                            catch (Exception ex)
+                            {
                                 Console.WriteLine("Login Error: " + ex.Message);
                                 return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
                             }
 
-                            try {
+                            try
+                            {
                                 manager.getUser(requestEmail, requestPasswordEmailHash);
-                            } catch (Exception ex) {
+                            }
+                            catch (Exception ex)
+                            {
                                 Console.WriteLine("Login Error: " + ex.Message);
                                 return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
                             }
@@ -168,18 +190,22 @@ namespace abs {
                             string requestEmail = "", requestPasswordEmailHash = "";
                             int requestNumItems = -1;
 
-                            try {
+                            try
+                            {
                                 mpObject requestJSON = (mpObject)mpJson.parse(requestData);
 
                                 requestEmail = ((mpValue)requestJSON.getChild("email")).data.asString();
                                 requestPasswordEmailHash = ((mpValue)requestJSON.getChild("passwordEmailHash")).data.asString();
                                 requestNumItems = ((mpValue)requestJSON.getChild("numItems")).data.asInt();
-                            } catch (Exception ex) {
+                            }
+                            catch (Exception ex)
+                            {
                                 Console.WriteLine("Exercise Request Error: " + ex.Message);
                                 return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
                             }
 
-                            try {
+                            try
+                            {
                                 User user = manager.getUser(requestEmail, requestPasswordEmailHash);
 
                                 mpResponse res = mpResponse.success();
@@ -187,7 +213,9 @@ namespace abs {
 
                                 Console.WriteLine("Responded! (user = " + requestEmail + ")");
                                 return res;
-                            } catch (Exception ex) {
+                            }
+                            catch (Exception ex)
+                            {
                                 Console.WriteLine("Exercise Request Error: " + ex.Message);
                                 return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
                             }
@@ -224,9 +252,12 @@ namespace abs {
                                 ex.difficulty = ((mpValue)feedbackItem.getChild("difficulty")).data.asInt();
                                 mpArray setInfo = ((mpArray)feedbackItem.getChild("sets"));
                                 int user1RM = ((mpValue)((mpObject)((mpObject)feedbackItem.getChild("feedbackItem")).getChild("exercise")).getChild("user1RM")).data.asInt();
-                                if (plan.exercise1rms.ContainsKey(uuid)) {
+                                if (plan.exercise1rms.ContainsKey(uuid))
+                                {
                                     plan.exercise1rms[uuid] = user1RM;
-                                } else {
+                                }
+                                else
+                                {
                                     plan.exercise1rms.Add(uuid, user1RM);
                                 }
                                 for (int i = 0; i < setInfo.allChildren.Count; i++)
