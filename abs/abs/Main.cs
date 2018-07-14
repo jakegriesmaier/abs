@@ -223,6 +223,12 @@ namespace abs {
                                 workoutItem ex = plan.findItem(uuid);
                                 ex.difficulty = ((mpValue)feedbackItem.getChild("difficulty")).data.asInt();
                                 mpArray setInfo = ((mpArray)feedbackItem.getChild("sets"));
+                                int user1RM = ((mpValue)((mpObject)((mpObject)feedbackItem.getChild("feedbackItem")).getChild("exercise")).getChild("user1RM")).data.asInt();
+                                if (plan.exercise1rms.ContainsKey(uuid)) {
+                                    plan.exercise1rms[uuid] = user1RM;
+                                } else {
+                                    plan.exercise1rms.Add(uuid, user1RM);
+                                }
                                 for (int i = 0; i < setInfo.allChildren.Count; i++)
                                 {
                                     try
