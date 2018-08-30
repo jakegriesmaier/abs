@@ -193,9 +193,10 @@ namespace abs {
 
                             try {
                                 User user = manager.getUser(requestEmail, requestPasswordEmailHash);
+                                UserInfo info = new UserInfo(db, user);
 
                                 mpResponse res = mpResponse.success();
-                                res.response = new binaryData(p.generateDay(requestNumItems).toJSON(user).ToString());
+                                res.response = new binaryData(p.generateDay(requestNumItems).toJSON(info).ToString());
 
                                 Console.WriteLine("Responded! (user = " + requestEmail + ")");
                                 return res;

@@ -76,7 +76,7 @@ namespace abs {
         public List<set> sets;
         public int difficulty;
 
-        public mpObject toJSON(User user) {
+        public mpObject toJSON(UserInfo user) {
             mpObject result = new mpObject();
 
             result.addProperty("uuid", new mpValue(uuid));
@@ -136,7 +136,7 @@ namespace abs {
         public DateTime date;
         public string uuid;
 
-        public mpObject toJSON(User user) {
+        public mpObject toJSON(UserInfo user) {
             mpObject result = new mpObject();
 
             result.addProperty("uuid", new mpValue(uuid));
