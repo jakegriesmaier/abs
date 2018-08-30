@@ -6,12 +6,9 @@ using System.Threading;
 
 using monopage;
 
-namespace abs
-{
-    class Abs
-    {
-        static void ResetDatabase(Database db)
-        {
+namespace abs {
+    class Abs {
+        static void ResetDatabase(Database db) {
             //refresh users table
             db.deleteTableIfExists("users");
             db.createTableIfNeeded("users", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
@@ -23,8 +20,10 @@ namespace abs
             db.deleteTableIfExists("userinfo");
             db.createTableIfNeeded("userinfo", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
                 new KeyValuePair<string, string>("email", "text"),
-                new KeyValuePair<string, string>("user1rms", "text"),
-
+                new KeyValuePair<string, string>("exercise", "text"),
+                new KeyValuePair<string, string>("reps", "int"),
+                new KeyValuePair<string, string>("weight", "int"),
+                new KeyValuePair<string, string>("recorded", "date")
             }));
 
             db.deleteTableIfExists("workoutdays");
@@ -60,11 +59,9 @@ namespace abs
             db.query("INSERT INTO workoutsets VALUES('5678', 10, 75, 30, 9);");
         }
 
-
-        static void Main(string[] args)
-        {
+        static void Main(string[] args) {
             string host = "localhost";
-            if(args.Length >= 1) {
+            if (args.Length >= 1) {
                 host = args[0];
             }
             string connection = "Server=" + host + ";Port=5432;Username=postgres;Password=postpass;Database=postgres";
@@ -85,6 +82,7 @@ namespace abs
             mpServer server = new mpServer();
             server.start(root.restful, "http://*:8080/");
 
+            #region register
             root.addProperty("register",
                 new mpRestfulTarget(
                     new Func<System.Net.HttpListenerRequest, mpResponse>(
@@ -99,26 +97,20 @@ namespace abs
                             string requestData = req.data();
                             string requestEmail = "", requestPasswordEmailHash = "";
 
-                            try
-                            {
+                            try {
                                 mpObject requestJSON = (mpObject)mpJson.parse(requestData);
 
                                 requestEmail = ((mpValue)requestJSON.getChild("email")).data.asString();
                                 requestPasswordEmailHash = ((mpValue)requestJSON.getChild("passwordEmailHash")).data.asString();
 
-                            }
-                            catch (Exception ex)
-                            {
+                            } catch (Exception ex) {
                                 Console.WriteLine("Account Creation Error:" + ex.Message);
                                 return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
                             }
 
-                            try
-                            {
+                            try {
                                 manager.createUser(requestEmail, requestPasswordEmailHash);
-                            }
-                            catch (Exception ex)
-                            {
+                            } catch (Exception ex) {
                                 Console.WriteLine("Account Creation Error:" + ex.Message);
                                 return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
                             }
@@ -129,7 +121,9 @@ namespace abs
                     )
                 )
             );
+            #endregion
 
+            #region login
             root.addProperty("login",
                 new mpRestfulTarget(
                     new Func<System.Net.HttpListenerRequest, mpResponse>(
@@ -144,26 +138,20 @@ namespace abs
                             string requestData = req.data();
                             string requestEmail = "", requestPasswordEmailHash = "";
 
-                            try
-                            {
+                            try {
                                 mpObject requestJSON = (mpObject)mpJson.parse(requestData);
 
                                 requestEmail = ((mpValue)requestJSON.getChild("email")).data.asString();
                                 requestPasswordEmailHash = ((mpValue)requestJSON.getChild("passwordEmailHash")).data.asString();
 
-                            }
-                            catch (Exception ex)
-                            {
+                            } catch (Exception ex) {
                                 Console.WriteLine("Login Error: " + ex.Message);
                                 return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
                             }
 
-                            try
-                            {
+                            try {
                                 manager.getUser(requestEmail, requestPasswordEmailHash);
-                            }
-                            catch (Exception ex)
-                            {
+                            } catch (Exception ex) {
                                 Console.WriteLine("Login Error: " + ex.Message);
                                 return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
                             }
@@ -174,7 +162,9 @@ namespace abs
                     )
                 )
             );
+            #endregion
 
+            #region exercise-info
             root.addProperty("exercise-info",
                 new mpRestfulTarget(
                     new Func<System.Net.HttpListenerRequest, mpResponse>(
@@ -190,22 +180,18 @@ namespace abs
                             string requestEmail = "", requestPasswordEmailHash = "";
                             int requestNumItems = -1;
 
-                            try
-                            {
+                            try {
                                 mpObject requestJSON = (mpObject)mpJson.parse(requestData);
 
                                 requestEmail = ((mpValue)requestJSON.getChild("email")).data.asString();
                                 requestPasswordEmailHash = ((mpValue)requestJSON.getChild("passwordEmailHash")).data.asString();
                                 requestNumItems = ((mpValue)requestJSON.getChild("numItems")).data.asInt();
-                            }
-                            catch (Exception ex)
-                            {
+                            } catch (Exception ex) {
                                 Console.WriteLine("Exercise Request Error: " + ex.Message);
                                 return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
                             }
 
-                            try
-                            {
+                            try {
                                 User user = manager.getUser(requestEmail, requestPasswordEmailHash);
 
                                 mpResponse res = mpResponse.success();
@@ -213,9 +199,7 @@ namespace abs
 
                                 Console.WriteLine("Responded! (user = " + requestEmail + ")");
                                 return res;
-                            }
-                            catch (Exception ex)
-                            {
+                            } catch (Exception ex) {
                                 Console.WriteLine("Exercise Request Error: " + ex.Message);
                                 return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
                             }
@@ -223,7 +207,50 @@ namespace abs
                     )
                 )
             );
+            #endregion
 
+            #region exercise-calibration
+            root.addProperty("exercise-calibration",
+                new mpRestfulTarget(
+                    new Func<System.Net.HttpListenerRequest, mpResponse>(
+                        req => {
+                            return mpResponse.empty400();
+                        }
+                    ),
+                    new Func<System.Net.HttpListenerRequest, mpResponse>(
+                        req => {
+                            Console.Write("Received Exercise Calibration Info...");
+
+                            string requestData = req.data();
+                            string requestEmail = "", requestPasswordEmailHash = "";
+                            int oneRepMax = -1;
+
+                            try {
+                                mpObject requestJSON = (mpObject)mpJson.parse(requestData);
+
+                                requestEmail = ((mpValue)requestJSON.getChild("email")).data.asString();
+                                requestPasswordEmailHash = ((mpValue)requestJSON.getChild("passwordEmailHash")).data.asString();
+
+                                UserInfo info = new UserInfo(db, manager.getUser(requestEmail, requestPasswordEmailHash));
+                                info.AddOneRepMax(
+                                    ((mpValue)requestJSON.getChild("exercise")).data.asString(),
+                                    ((mpValue)requestJSON.getChild("reps")).data.asInt(),
+                                    ((mpValue)requestJSON.getChild("weight")).data.asInt()
+                                );
+                                info.Store();
+                            } catch (Exception ex) {
+                                Console.WriteLine("Calibration Info Error: " + ex.Message);
+                                return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
+                            }
+
+                            return new mpResponse(new binaryData("{\"good\":true, \"oneRepMax\":" + oneRepMax + "}"), 200);
+                        }
+                    )
+                )
+            );
+            #endregion
+
+            #region exercise-feedback
             root.addProperty("exercise-feedback",
                 new mpRestfulTarget(
                     new Func<System.Net.HttpListenerRequest, mpResponse>(
@@ -239,8 +266,7 @@ namespace abs
                             string requestEmail = "", requestPasswordEmailHash = "";
                             mpObject feedbackItem = null;
 
-                            try
-                            {
+                            try {
                                 mpObject requestJSON = (mpObject)mpJson.parse(requestData);
 
                                 requestEmail = ((mpValue)requestJSON.getChild("email")).data.asString();
@@ -252,36 +278,28 @@ namespace abs
                                 ex.difficulty = ((mpValue)feedbackItem.getChild("difficulty")).data.asInt();
                                 mpArray setInfo = ((mpArray)feedbackItem.getChild("sets"));
                                 int user1RM = ((mpValue)((mpObject)((mpObject)feedbackItem.getChild("feedbackItem")).getChild("exercise")).getChild("user1RM")).data.asInt();
-                                if (plan.exercise1rms.ContainsKey(uuid))
-                                {
+                                if (plan.exercise1rms.ContainsKey(uuid)) {
                                     plan.exercise1rms[uuid] = user1RM;
-                                }
-                                else
-                                {
+                                } else {
                                     plan.exercise1rms.Add(uuid, user1RM);
                                 }
-                                for (int i = 0; i < setInfo.allChildren.Count; i++)
-                                {
-                                    try
-                                    {
+                                for (int i = 0; i < setInfo.allChildren.Count; i++) {
+                                    try {
                                         ex.sets[i].repsCompleted = ((mpValue)((mpObject)setInfo[i]).getChild("repsCompleted")).data.asInt();
                                         ex.sets[i].doneWithRest = true;
-                                    }
-                                    catch (Exception e) { };
+                                    } catch (Exception e) { };
 
                                 }
-                            }
-                            catch (Exception ex)
-                            {
+                            } catch (Exception ex) {
                                 Console.WriteLine("Exercise Request Error: " + ex.Message);
                                 return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
                             }
                             return mpResponse.empty200();
                         }
-                  )
-              )
-          );
-
+                    )
+                )
+            );
+            #endregion
 
             Console.ReadKey();
 

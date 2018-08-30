@@ -39,5 +39,16 @@ namespace abs {
             if (r == null) r = new Random();
             return hash(r.Next().ToString());
         }
+
+        public static string DateStringFormat(DateTime date) {
+            return date.Year + date.Month.ToString().PadLeft(2, '0') + date.Day.ToString().PadLeft(2, '0');
+        }
+        public static DateTime ParseDate(String date) {
+            int year = int.Parse(date.Substring(0, 4));
+            int month = int.Parse(date.Substring(5, 7)) - 1;
+            int day = int.Parse(date.Substring(8, 10));
+
+            return new DateTime(year, month, day);
+        }
     }
 }

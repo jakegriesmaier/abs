@@ -22,38 +22,7 @@ namespace abs {
         }
 
         Dictionary<string, double> exericse1RMs;
-
-        public bool exerciseHasBeenCalibrated(string exerciseName) {
-            return exericse1RMs != null ? exericse1RMs.ContainsKey(exerciseName) : false;
-        }
-
-        public double getExercise1RM(string exerciseName) {
-            if (exericse1RMs == null) fillExercise1RMs();
-            if (exericse1RMs.ContainsKey(exerciseName)) {
-                return exericse1RMs[exerciseName];
-            }
-            return -1;
-        }
-
-        public void fillExercise1RMs() {
-            exericse1RMs = new Dictionary<string, double>();
-            QueryResult res = _db.query("SELECT * FROM userinfo WHERE email='" + email + "'");
-            if(res.Rows == 1) {
-                binaryData data = res.GetField(1, 0);
-                mpObject json = (mpObject) mpJson.parse(data.asString());
-                    foreach(var kvp in json.allChildren) {
-                    exericse1RMs.Add(kvp.Key, ((mpValue) kvp.Value).data.asDouble());
-                }
-            }
-        }
-
-        public void storeExercise1Rms() {
-            mpObject res = new mpObject();
-            foreach (KeyValuePair<string, double> kvp in exericse1RMs) {
-                res.addProperty(kvp.Key, new mpValue(kvp.Value));
-            }
-            _db.query("UPDATE userinfo SET user1RM ='" + res.ToString() + "' WHERE email='" + email + "'");
-        }
+        
 
         public User(Database db, string email, string passwordEmailHash, string salt) {
             _db = db;

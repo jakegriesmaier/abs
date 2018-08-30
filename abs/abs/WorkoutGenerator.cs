@@ -165,9 +165,12 @@ namespace abs {
         public MuscleGroupQueue arms => groups["arms"];
         public MuscleGroupQueue abs => groups["abdominals"];
 
+        private UserInfo userInfo;
+
         public Plan(Database dat, User user) {
-            this.user = user;
             this.dat = dat;
+            this.user = user;
+            userInfo = new UserInfo(dat, user);
 
             groups = new Dictionary<string, MuscleGroupQueue>();
             groups.Add("chest", new MuscleGroupQueue("chest", 1.0));
@@ -499,5 +502,4 @@ namespace abs {
         #endregion
 
     }
-
 }
