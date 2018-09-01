@@ -54,35 +54,15 @@ namespace abs {
                 new KeyValuePair<string, string>("feedbackreps", "int"),
             }));
 
-            db.query("INSERT INTO workoutdays VALUES('1234', 'bob@bob.com', '2018-01-05', 'chest', 'upperchest', 1);");
-            db.query("INSERT INTO workoutitems VALUES('5678', '1234', 'Barbell Bench Press ', 1, 0);");
-            db.query("INSERT INTO workoutsets VALUES('5678', 10, 75, 30, 9);");
+            //db.query("INSERT INTO workoutdays VALUES('1234', 'bob@bob.com', '2018-01-05', 'chest', 'upperchest', 1);");
+            //db.query("INSERT INTO workoutitems VALUES('5678', '1234', 'Barbell Bench Press ', 1, 0);");
+            //db.query("INSERT INTO workoutsets VALUES('5678', 10, 75, 30, 9);");
         }
 
-        static void Main(string[] args) {
-            string host = "localhost";
-            if (args.Length >= 1) {
-                host = args[0];
-            }
-            string connection = "Server=" + host + ";Port=5432;Username=postgres;Password=postpass;Database=postgres";
-
-            Database db = new Database(connection);
-            ResetDatabase(db);
-
-            UserManager manager = new UserManager(db);
-
-            HashSet<Exercise> exercises = Exercise.getAllExercises(db);
-
-            Plan p = new Plan(db, new User(db, "bob@bob.com", "salt", Util.hash("password" + "salt")));
-
-            WorkoutDay day = p.generateDay(3);
-
-            mpBase root = new mpBase();
-
-            mpServer server = new mpServer();
-            server.start(root.restful, "http://*:8080/");
-
-            #region register
+        /// <summary>
+        /// manages user creating accounts
+        /// </summary>
+        static void SetupRegistrationManager(mpBase root, Database db, UserManager manager) {
             root.addProperty("register",
                 new mpRestfulTarget(
                     new Func<System.Net.HttpListenerRequest, mpResponse>(
@@ -121,9 +101,12 @@ namespace abs {
                     )
                 )
             );
-            #endregion
+        }
 
-            #region login
+        /// <summary>
+        /// informs user if their login credentials are valid or not
+        /// </summary>
+        static void SetupLoginManager(mpBase root, Database db, UserManager manager) {
             root.addProperty("login",
                 new mpRestfulTarget(
                     new Func<System.Net.HttpListenerRequest, mpResponse>(
@@ -162,9 +145,16 @@ namespace abs {
                     )
                 )
             );
-            #endregion
+        }
 
-            #region exercise-info
+        /// <summary>
+        /// manages creating exercises and responding to the user with information about that request
+        /// including all the exercises that were created during the request
+        /// </summary>
+        /// <param name="root"></param>
+        /// <param name="db"></param>
+        /// <param name="manager"></param>
+        static void SetupExerciseInfoManager(mpBase root, Database db, UserManager manager) {
             root.addProperty("exercise-info",
                 new mpRestfulTarget(
                     new Func<System.Net.HttpListenerRequest, mpResponse>(
@@ -194,6 +184,7 @@ namespace abs {
                             try {
                                 User user = manager.getUser(requestEmail, requestPasswordEmailHash);
                                 UserInfo info = new UserInfo(db, user);
+                                Plan p = new Plan(db, user);
 
                                 mpResponse res = mpResponse.success();
                                 res.response = new binaryData(p.generateDay(requestNumItems).toJSON(info).ToString());
@@ -208,9 +199,16 @@ namespace abs {
                     )
                 )
             );
-            #endregion
+        }
 
-            #region exercise-calibration
+        /// <summary>
+        /// takes in calibration information for a certain exercise and returns the calculated 1rm
+        /// for that exercise
+        /// </summary>
+        /// <param name="root"></param>
+        /// <param name="db"></param>
+        /// <param name="manager"></param>
+        static void SetupExerciseCalibrationManager(mpBase root, Database db, UserManager manager) {
             root.addProperty("exercise-calibration",
                 new mpRestfulTarget(
                     new Func<System.Net.HttpListenerRequest, mpResponse>(
@@ -224,21 +222,23 @@ namespace abs {
 
                             string requestData = req.data();
                             string requestEmail = "", requestPasswordEmailHash = "";
-                            int oneRepMax = -1;
+                            double oneRepMax = -1;
 
                             try {
                                 mpObject requestJSON = (mpObject)mpJson.parse(requestData);
 
                                 requestEmail = ((mpValue)requestJSON.getChild("email")).data.asString();
                                 requestPasswordEmailHash = ((mpValue)requestJSON.getChild("passwordEmailHash")).data.asString();
+                                string exName = ((mpValue)requestJSON.getChild("exercise")).data.asString();
 
                                 UserInfo info = new UserInfo(db, manager.getUser(requestEmail, requestPasswordEmailHash));
-                                info.AddOneRepMax(
-                                    ((mpValue)requestJSON.getChild("exercise")).data.asString(),
+                                info.IngestCalibrationInfo(
+                                    exName,
                                     ((mpValue)requestJSON.getChild("reps")).data.asInt(),
                                     ((mpValue)requestJSON.getChild("weight")).data.asInt()
                                 );
                                 info.Store();
+                                oneRepMax = info.GetOneRepMax(exName).value;
                             } catch (Exception ex) {
                                 Console.WriteLine("Calibration Info Error: " + ex.Message);
                                 return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
@@ -249,9 +249,15 @@ namespace abs {
                     )
                 )
             );
-            #endregion
+        }
 
-            #region exercise-feedback
+        /// <summary>
+        /// takes in feedback for a workout item and passes it to the user's plan for processing
+        /// </summary>
+        /// <param name="root"></param>
+        /// <param name="db"></param>
+        /// <param name="manager"></param>
+        static void SetupExerciseFeedbackManager(mpBase root, Database db, UserManager manager) {
             root.addProperty("exercise-feedback",
                 new mpRestfulTarget(
                     new Func<System.Net.HttpListenerRequest, mpResponse>(
@@ -295,12 +301,35 @@ namespace abs {
                                 Console.WriteLine("Exercise Request Error: " + ex.Message);
                                 return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
                             }
-                            return mpResponse.empty200();
+                            return new mpResponse(new binaryData("{\"good\":true}"), 200);
                         }
                     )
                 )
             );
-            #endregion
+        }
+
+        static void Main(string[] args) {
+            string host = "localhost";
+            if (args.Length >= 1) {
+                host = args[0];
+            }
+            string connection = "Server=" + host + ";Port=5432;Username=postgres;Password=postpass;Database=postgres";
+
+            Database db = new Database(connection);
+            ResetDatabase(db);
+
+            UserManager manager = new UserManager(db);
+            
+            mpBase root = new mpBase();
+
+            mpServer server = new mpServer();
+            server.start(root.restful, "http://*:8080/");
+
+            SetupRegistrationManager(root, db, manager);
+            SetupLoginManager(root, db, manager);
+            SetupExerciseInfoManager(root, db, manager);
+            SetupExerciseCalibrationManager(root, db, manager);
+            SetupExerciseFeedbackManager(root, db, manager);
 
             Console.ReadKey();
 

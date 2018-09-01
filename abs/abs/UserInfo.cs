@@ -15,7 +15,7 @@ namespace abs {
             public double value => (1 + reps / 30.0) * weight;
         }
 
-        private User user;
+        public User user { get; private set; }
         private Database db;
         private Dictionary<string, List<OneRepMax>> user1rms;
         private Dictionary<string,List<OneRepMax>> new1rms;
@@ -37,7 +37,7 @@ namespace abs {
                 return new OneRepMax { reps = -1, weight = -1, recorded = null };
             }
         }
-        public void AddOneRepMax(string exercise, int reps, int weight) {
+        public void IngestCalibrationInfo(string exercise, int reps, int weight) {
             OneRepMax oneRepMax = new OneRepMax { reps = reps, weight = weight, recorded = DateTime.Now };
 
             if (!user1rms.ContainsKey(exercise)) {

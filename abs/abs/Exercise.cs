@@ -151,7 +151,7 @@ namespace abs {
                new mpProperty("recommendedCalibrationWeight", new mpValue(25)),
                new mpProperty("calibrationWeight", new mpValue(25)),
                new mpProperty("calibrationReps", new mpValue(-1)),
-               new mpProperty("calibrationWeightEntered", new mpValue(user.GetOneRepMax(exerciseName).weight >= 0)));
+               new mpProperty("hasBeenCalibrated", new mpValue(user.GetOneRepMax(exerciseName).exists)));
         }
     }
 

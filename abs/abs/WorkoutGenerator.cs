@@ -153,6 +153,7 @@ namespace abs {
     public class Plan {
         public HashSet<Exercise> allExercises;
         public List<WorkoutDay> oldDays;
+        private List<WorkoutDay> newDays = new List<WorkoutDay>();
         public User user;
         public Database dat;
         public Dictionary<string, int> exercise1rms;
@@ -411,6 +412,8 @@ namespace abs {
                     });
                 }
             }
+
+            newDays.Add(res);
             
             return res;
         }
@@ -449,6 +452,13 @@ namespace abs {
     /// </summary>
     public static class Styles {
 
+        #region SetTypes
+        public static readonly SetDetail TenRepSet = new SetDetail { reps = 10, Percent1RM = 71, restTime = 60 };
+        public static readonly SetDetail FiveRepSet = new SetDetail { reps = 5, Percent1RM = 81, restTime = 90 };
+        public static readonly SetDetail FifteenRepSet = new SetDetail { reps = 15, Percent1RM = 64, restTime = 45 };
+        public static readonly SetDetail DeloadSet = new SetDetail { reps = 10, Percent1RM = 64, restTime = 60 };
+        #endregion
+
         public static readonly SetDetail[] FiveByTen = { TenRepSet, TenRepSet, TenRepSet, TenRepSet, TenRepSet };
         public static readonly SetDetail[] FiveByFive = { FiveRepSet, FiveRepSet, FiveRepSet, FiveRepSet, FiveRepSet };
         public static readonly SetDetail[] FiveByFifteen = { FifteenRepSet, FifteenRepSet, FifteenRepSet, FifteenRepSet, FifteenRepSet };
@@ -466,13 +476,6 @@ namespace abs {
         public static readonly SetDetail[] ThreeLatter = { FiveRepSet, TenRepSet, FifteenRepSet };
         public static readonly SetDetail[] ThreeReverseLatter = { FifteenRepSet, TenRepSet, FiveRepSet };
         public static readonly SetDetail[] ThreeDeload = { DeloadSet, DeloadSet, DeloadSet };
-
-        #region SetTypes
-        public static readonly SetDetail TenRepSet = new SetDetail { reps = 10, Percent1RM = 71, restTime = 60 };
-        public static readonly SetDetail FiveRepSet = new SetDetail { reps = 5, Percent1RM = 81, restTime = 90 };
-        public static readonly SetDetail FifteenRepSet = new SetDetail { reps = 15, Percent1RM = 64, restTime = 45 };
-        public static readonly SetDetail DeloadSet = new SetDetail { reps = 10, Percent1RM = 64, restTime = 60 };
-        #endregion
 
         #region FiveSetters
         public static readonly List<SetDetails> FiveSetStyles = new List<SetDetails>{
