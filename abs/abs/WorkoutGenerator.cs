@@ -194,8 +194,8 @@ namespace abs {
                     primaryGroup = days.GetField("primarygroup", i).asString(),
                     secondaryGroup = days.GetField("secondarygroup", i).asString(),
                     date = days.GetField("workoutdate", i).asDate(),
-                    uuid = days.GetField("dayid", i).asString()
-            });                    
+                    uuid = days.GetField("uuid", i).asString()
+                });                    
             }
 
             foreach(WorkoutDay d in oldDays) {
@@ -203,10 +203,11 @@ namespace abs {
 
                 for(int i = 0; i < items.Rows; i++) {
                     Exercise exercise = null;
-                    String uuid = items.GetField("itemid", i).asString();
+                    string uuid = items.GetField("uuid", i).asString();
+                    string exercisename = items.GetField("exercisename", i).asString();
 
                     foreach (Exercise ex in allExercises) {
-                        if (ex.exerciseName == items.GetField("exercisename", i).asString()) {
+                        if (ex.exerciseName == exercisename) {
                             exercise = ex;
                         }
                     }
@@ -232,8 +233,7 @@ namespace abs {
             }
         }
 
-        
-        public void store(List<WorkoutDay> newDays) {
+        public void Store() {
             foreach (WorkoutDay day in newDays) {
                 string dayid = Guid.NewGuid().ToString();
                 string associatedUser = user.email;
@@ -264,9 +264,10 @@ namespace abs {
                             associateditem, reps, percent1rm, resttime, feedbackreps));
                     }
                 }
+                oldDays.Add(day);
             }
+            newDays.Clear();
         }
-
 
         /// <summary>
         /// Selects Set Details depending on the number of sets in a workout item (3 or 5 sets)

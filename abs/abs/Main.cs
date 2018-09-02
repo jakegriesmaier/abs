@@ -28,7 +28,7 @@ namespace abs {
 
             db.deleteTableIfExists("workoutdays");
             db.createTableIfNeeded("workoutdays", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
-                new KeyValuePair<string, string>("dayid", "text"), //uuid of this day
+                new KeyValuePair<string, string>("uuid", "text"),
                 new KeyValuePair<string, string>("associateduser", "text"),
                 new KeyValuePair<string, string>("workoutdate", "date"),
                 new KeyValuePair<string, string>("primarygroup", "text"),
@@ -38,7 +38,7 @@ namespace abs {
 
             db.deleteTableIfExists("workoutitems");
             db.createTableIfNeeded("workoutitems", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
-                new KeyValuePair<string, string>("itemid", "text"), //uuid of this item
+                new KeyValuePair<string, string>("uuid", "text"),
                 new KeyValuePair<string, string>("associatedday", "text"), //uuid of associated day
                 new KeyValuePair<string, string>("exercisename", "text"),
                 new KeyValuePair<string, string>("setcount", "int"),
@@ -47,6 +47,7 @@ namespace abs {
 
             db.deleteTableIfExists("workoutsets");
             db.createTableIfNeeded("workoutsets", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
+                new KeyValuePair<string, string>("uuid", "text"),
                 new KeyValuePair<string, string>("associateditem", "text"),
                 new KeyValuePair<string, string>("reps", "int"),
                 new KeyValuePair<string, string>("percent1rm", "int"),
@@ -188,6 +189,7 @@ namespace abs {
 
                                 mpResponse res = mpResponse.success();
                                 res.response = new binaryData(p.generateDay(requestNumItems).toJSON(info).ToString());
+                                p.Store();
 
                                 Console.WriteLine("Responded! (user = " + requestEmail + ")");
                                 return res;
@@ -271,32 +273,15 @@ namespace abs {
 
                             string requestData = req.data();
                             string requestEmail = "", requestPasswordEmailHash = "";
-                            mpObject feedbackItem = null;
 
                             try {
                                 mpObject requestJSON = (mpObject)mpJson.parse(requestData);
 
                                 requestEmail = ((mpValue)requestJSON.getChild("email")).data.asString();
                                 requestPasswordEmailHash = ((mpValue)requestJSON.getChild("passwordEmailHash")).data.asString();
-                                feedbackItem = ((mpObject)requestJSON.getChild("feedbackItem"));
-                                Plan plan = new Plan(db, manager.getUser(requestEmail, requestPasswordEmailHash));
-                                string uuid = ((mpValue)feedbackItem.getChild("uuid")).data.asString();
-                                workoutItem ex = plan.findItem(uuid);
-                                ex.difficulty = ((mpValue)feedbackItem.getChild("difficulty")).data.asInt();
-                                mpArray setInfo = ((mpArray)feedbackItem.getChild("sets"));
-                                int user1RM = ((mpValue)((mpObject)((mpObject)feedbackItem.getChild("feedbackItem")).getChild("exercise")).getChild("user1RM")).data.asInt();
-                                if (plan.exercise1rms.ContainsKey(uuid)) {
-                                    plan.exercise1rms[uuid] = user1RM;
-                                } else {
-                                    plan.exercise1rms.Add(uuid, user1RM);
-                                }
-                                for (int i = 0; i < setInfo.allChildren.Count; i++) {
-                                    try {
-                                        ex.sets[i].repsCompleted = ((mpValue)((mpObject)setInfo[i]).getChild("repsCompleted")).data.asInt();
-                                        ex.sets[i].doneWithRest = true;
-                                    } catch (Exception e) { };
 
-                                }
+
+
                             } catch (Exception ex) {
                                 Console.WriteLine("Exercise Request Error: " + ex.Message);
                                 return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
