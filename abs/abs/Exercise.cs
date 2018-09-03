@@ -65,7 +65,7 @@ namespace abs {
         public string youtube;
 
         public static HashSet<Exercise> getAllExercises(Database db) {
-            var exercises = db.query("select * from exercises");
+            var exercises = db.query("select * from exercises where CAST(requiresweight AS int) = 1");
             HashSet<Exercise> res = new HashSet<Exercise>();
 
             for (int i = 0; i < exercises.Rows; i++) {
@@ -83,6 +83,7 @@ namespace abs {
             }
 
             //TODO: load all exercises with a single query
+            globalExercises = res;
             return res;
         }
 
@@ -107,6 +108,11 @@ namespace abs {
             return res;
         }
 
+        public static HashSet<Exercise> globalExercises;
+
+        public static Exercise getByName(string name) {
+            return getByName(globalExercises, name);
+        }
         public static Exercise getByName(HashSet<Exercise> ex, string name) {
             foreach (Exercise e in ex) {
                 if (e.exerciseName.Equals(name)) {

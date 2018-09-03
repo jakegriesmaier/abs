@@ -42,7 +42,7 @@ namespace abs {
                 new KeyValuePair<string, string>("associatedday", "text"), //uuid of associated day
                 new KeyValuePair<string, string>("exercisename", "text"),
                 new KeyValuePair<string, string>("setcount", "int"),
-                new KeyValuePair<string, string>("feedbackdifficulty", "int")
+                new KeyValuePair<string, string>("difficulty", "int")
             }));
 
             db.deleteTableIfExists("workoutsets");
@@ -280,7 +280,15 @@ namespace abs {
                                 requestEmail = ((mpValue)requestJSON.getChild("email")).data.asString();
                                 requestPasswordEmailHash = ((mpValue)requestJSON.getChild("passwordEmailHash")).data.asString();
 
+                                mpObject feedback = (mpObject)requestJSON.getChild("feedback");
 
+                                WorkoutItem day = new WorkoutItem(feedback);
+
+                                Plan p = new Plan(db, manager.getUser(requestEmail, requestPasswordEmailHash));
+
+                                p.ingestFeedback(day);
+
+                                p.Store();
 
                             } catch (Exception ex) {
                                 Console.WriteLine("Exercise Request Error: " + ex.Message);
@@ -302,6 +310,8 @@ namespace abs {
 
             Database db = new Database(connection);
             ResetDatabase(db);
+
+            Exercise.getAllExercises(db);
 
             UserManager manager = new UserManager(db);
             
