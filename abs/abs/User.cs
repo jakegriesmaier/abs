@@ -35,7 +35,7 @@ namespace abs {
         private bool isSanitary(params string[] values) {
             foreach (string value in values)
                 for (int i = 0; i < value.Length; i++)
-                    if (!(char.IsLetterOrDigit(value[i]) || value[i] == '+' || value[i] == '/' || value[i] == '=' || value[i] == '-' || value[i] == '.' || value[i] == '_' || value[i] == '@'))
+                    if (!(char.IsLetterOrDigit(value[i]) || value[i] == '+' || value[i] == '/' || value[i] == '\\' || value[i] == '=' || value[i] == '-' || value[i] == '.' || value[i] == '_' || value[i] == '@'))
                         return false;
             return true;
         }
