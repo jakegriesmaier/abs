@@ -195,6 +195,8 @@ namespace abs {
                                 info.Store();
                                 info.Dispose();
 
+                                Console.WriteLine(res.response.asString());
+
                                 Console.WriteLine("Responded! (user = " + requestEmail + ")");
                                 return res;
                             } catch (Exception ex) {
