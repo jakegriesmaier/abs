@@ -86,7 +86,7 @@ namespace abs {
         }
 
         public void deleteUser(string email, string passwordEmailHash) {
-            if (!isSanitary(email, passwordEmailHash)) throw new Exception("Only a-z, A-Z, 0-9, +, /, = allowed");
+            if (!isSanitary(email, passwordEmailHash)) throw new Exception("Only a-z, A-Z, 0-9, +, /, = allowed\nemail = " + email + "\npeh = " + passwordEmailHash);
 
             User foundUser = getUser(email, passwordEmailHash);
 
@@ -98,7 +98,7 @@ namespace abs {
             }
         }
         public User createUser(string email, string passwordEmailHash) {
-            if (!isSanitary(email, passwordEmailHash)) throw new Exception("Only a-z, A-Z, 0-9, +, /, = allowed");
+            if (!isSanitary(email, passwordEmailHash)) throw new Exception("Only a-z, A-Z, 0-9, +, /, = allowed\nemail = " + email + "\npeh = " + passwordEmailHash);
 
             if (emailTaken(email)) throw new Exception("Email Already In Use");
 
@@ -113,12 +113,12 @@ namespace abs {
 
             return newUser;
         }
-        public User getUser(string email, string passwordEmailHas) {
-            if (!isSanitary(email, passwordEmailHas)) throw new Exception("Only a-z, A-Z, 0-9, +, /, = allowed");
+        public User getUser(string email, string passwordEmailHash) {
+            if (!isSanitary(email, passwordEmailHash)) throw new Exception("Only a-z, A-Z, 0-9, +, /, = allowed\nemail = " + email + "\npeh = " + passwordEmailHash);
 
-            User foundUser = checkCachedUser(email, passwordEmailHas);
+            User foundUser = checkCachedUser(email, passwordEmailHash);
             if (foundUser != null) return foundUser;
-            User queriedUser = queryUser(email, passwordEmailHas);
+            User queriedUser = queryUser(email, passwordEmailHash);
             _users.Insert(0, queriedUser);
             if(_users.Count > maxLoadedUsers) _users.RemoveAt(_users.Count - 1);
             return queriedUser;
