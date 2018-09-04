@@ -149,15 +149,15 @@ namespace abs {
             return new HashSet<Exercise>(allAvailableExercises.Where(e => !(usedExercises.Select(ex => ex.exerciseName).Contains(e.exerciseName))));
         }
 
-        public mpObject toJSON(UserInfo user) {
+        public mpObject toJSON(UserDataAccess user) {
             return new mpObject(
                new mpProperty("name", new mpValue(exerciseName)), 
                new mpProperty("video", new mpValue(youtube)),
-               new mpProperty("user1RM", new mpValue(user.GetOneRepMax(exerciseName).value)),
+               new mpProperty("user1RM", new mpValue(user.GetMostRecentCalibratedOneRepMax(exerciseName).Value)),
                new mpProperty("recommendedCalibrationWeight", new mpValue(25)),
                new mpProperty("calibrationWeight", new mpValue(25)),
                new mpProperty("calibrationReps", new mpValue(-1)),
-               new mpProperty("hasBeenCalibrated", new mpValue(user.GetOneRepMax(exerciseName).exists)));
+               new mpProperty("hasBeenCalibrated", new mpValue(user.GetMostRecentCalibratedOneRepMax(exerciseName).Exists)));
         }
     }
 

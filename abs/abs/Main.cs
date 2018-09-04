@@ -17,8 +17,8 @@ namespace abs {
                 new KeyValuePair<string, string>("passwordHashHash", "text")
             }));
 
-            db.deleteTableIfExists("userinfo");
-            db.createTableIfNeeded("userinfo", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
+            db.deleteTableIfExists("usercalibration");
+            db.createTableIfNeeded("usercalibration", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
                 new KeyValuePair<string, string>("email", "text"),
                 new KeyValuePair<string, string>("exercise", "text"),
                 new KeyValuePair<string, string>("reps", "int"),
@@ -42,7 +42,8 @@ namespace abs {
                 new KeyValuePair<string, string>("associatedday", "text"), //uuid of associated day
                 new KeyValuePair<string, string>("exercisename", "text"),
                 new KeyValuePair<string, string>("setcount", "int"),
-                new KeyValuePair<string, string>("difficulty", "int")
+                new KeyValuePair<string, string>("difficulty", "int"),
+                new KeyValuePair<string, string>("onerepmax", "real")
             }));
 
             db.deleteTableIfExists("workoutsets");
@@ -184,12 +185,15 @@ namespace abs {
 
                             try {
                                 User user = manager.getUser(requestEmail, requestPasswordEmailHash);
-                                UserInfo info = new UserInfo(db, user);
-                                Plan p = new Plan(db, user);
+                                UserDataAccess info = new UserDataAccess(db, user);
+                                WorkoutGenerator p = new WorkoutGenerator(info);
 
                                 mpResponse res = mpResponse.success();
-                                res.response = new binaryData(p.generateDay(requestNumItems).toJSON(info).ToString());
-                                p.Store();
+                                var day = p.generateDay(requestNumItems);
+                                res.response = new binaryData(day.toJSON(info).ToString());
+                                info.AddDay(day);
+                                info.Store();
+                                info.Dispose();
 
                                 Console.WriteLine("Responded! (user = " + requestEmail + ")");
                                 return res;
@@ -233,14 +237,14 @@ namespace abs {
                                 requestPasswordEmailHash = ((mpValue)requestJSON.getChild("passwordEmailHash")).data.asString();
                                 string exName = ((mpValue)requestJSON.getChild("exercise")).data.asString();
 
-                                UserInfo info = new UserInfo(db, manager.getUser(requestEmail, requestPasswordEmailHash));
+                                UserDataAccess info = new UserDataAccess(db, manager.getUser(requestEmail, requestPasswordEmailHash));
                                 info.IngestCalibrationInfo(
                                     exName,
                                     ((mpValue)requestJSON.getChild("reps")).data.asInt(),
                                     ((mpValue)requestJSON.getChild("weight")).data.asInt()
                                 );
                                 info.Store();
-                                oneRepMax = info.GetOneRepMax(exName).value;
+                                oneRepMax = info.GetMostRecentCalibratedOneRepMax(exName).Value;
                             } catch (Exception ex) {
                                 Console.WriteLine("Calibration Info Error: " + ex.Message);
                                 return new mpResponse(new binaryData("{\"good\":false, \"message\":\"" + ex.Message + "\"}"), 400);
@@ -282,13 +286,13 @@ namespace abs {
 
                                 mpObject feedback = (mpObject)requestJSON.getChild("feedback");
 
-                                WorkoutItem day = new WorkoutItem(feedback);
+                                WorkoutItem item = new WorkoutItem(feedback);
 
-                                Plan p = new Plan(db, manager.getUser(requestEmail, requestPasswordEmailHash));
-
-                                p.ingestFeedback(day);
-
-                                p.Store();
+                                UserDataAccess access = new UserDataAccess(db, manager.getUser(requestEmail, requestPasswordEmailHash));
+                                
+                                access.UpdateItem(item);
+                                access.Store();
+                                access.Dispose();
 
                             } catch (Exception ex) {
                                 Console.WriteLine("Exercise Request Error: " + ex.Message);

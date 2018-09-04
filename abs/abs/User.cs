@@ -13,14 +13,7 @@ namespace abs {
         public readonly string salt; //salt
         public readonly string passwordEmailHash; //hash(password + email)
         public readonly string passwordEmailHashSaltHash; //hash(passwordEmailHash + salt)
-
-        private Plan _plan = null;
-
-        public Plan getPlan() {
-            if (_plan == null) _plan = new Plan(_db, this);
-            return _plan;
-        }
-
+        
         Dictionary<string, double> exericse1RMs;
         
 

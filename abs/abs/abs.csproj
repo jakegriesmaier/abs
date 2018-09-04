@@ -62,8 +62,9 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="User.cs" />
-    <Compile Include="UserInfo.cs" />
+    <Compile Include="UserDataAccess.cs" />
     <Compile Include="Util.cs" />
+    <Compile Include="UserInfo.cs" />
     <Compile Include="WorkoutGenerator.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -3,73 +3,102 @@ using System.Collections.Generic;
 using System.Linq;
 using monopage;
 
-
 namespace abs {
-    public class UserInfo {
-        public struct OneRepMax {
-            public int reps;
-            public int weight;
-            public DateTime? recorded;
+    public struct Calibration {
+        public int reps;
+        public int weight;
+        public DateTime? recorded;
 
-            public bool exists => reps != -1;
-            public double value => (1 + reps / 30.0) * weight;
+        public bool Exists => reps != -1;
+        public double Value => (1 + reps / 30.0) * weight;
+    }
+
+    public struct WorkoutItem {
+        public string uuid;
+        public Exercise ex;
+        public List<WorkoutSet> sets;
+        public int difficulty;
+        public double oneRepMax;
+
+        public mpObject toJSON(UserDataAccess user) {
+            mpObject result = new mpObject();
+
+            result.addProperty("uuid", new mpValue(uuid));
+            result.addProperty("exercise", ex.toJSON(user));
+            result.addProperty("sets", new mpArray(sets.Select(set => set.toJSON()).ToArray()));
+            result.addProperty("difficulty", new mpValue(difficulty));
+            result.addProperty("onerepmax", new mpValue(oneRepMax));
+
+            return result;
         }
 
-        public User user { get; private set; }
-        private Database db;
-        private Dictionary<string, List<OneRepMax>> user1rms;
-        private Dictionary<string,List<OneRepMax>> new1rms;
-
-        private void AddLoadedOneRepMax(string exercise, int reps, int weight, DateTime date) {
-            OneRepMax oneRepMax = new OneRepMax { reps = reps, weight = weight, recorded = date };
-
-            if (!user1rms.ContainsKey(exercise)) {
-                user1rms.Add(exercise, new List<OneRepMax>());
-            }
-            user1rms[exercise].Add(oneRepMax);
-        }
-        public OneRepMax GetOneRepMax(string exercise) {
-            if(user1rms.ContainsKey(exercise)) {
-                List<OneRepMax> oneRMs = user1rms[exercise];
-                //return oneRMs?.Last() ?? new OneRepMax { reps = -1, weight = -1, recorded = null };
-                return (oneRMs != null) ? oneRMs.Last() : new OneRepMax { reps = -1, weight = -1, recorded = null };
-            } else {
-                return new OneRepMax { reps = -1, weight = -1, recorded = null };
+        public WorkoutItem(mpObject data) {
+            uuid = ((mpValue)data.getChild("uuid")).data.asString();
+            ex = Exercise.getByName(((mpValue)((mpObject)data.getChild("exercise")).getChild("name")).data.asString());
+            difficulty = ((mpValue)data.getChild("difficulty")).data.asInt();
+            sets = new List<WorkoutSet>();
+            oneRepMax = ((mpValue)data.getChild("onerepmax")).data.asDouble();
+            foreach (mpObject set in ((mpArray)data.getChild("sets"))) {
+                sets.Add(new WorkoutSet(set));
             }
         }
-        public void IngestCalibrationInfo(string exercise, int reps, int weight) {
-            OneRepMax oneRepMax = new OneRepMax { reps = reps, weight = weight, recorded = DateTime.Now };
+    }
 
-            if (!user1rms.ContainsKey(exercise)) {
-                user1rms.Add(exercise, new List<OneRepMax>());
-            }
-            user1rms[exercise].Add(oneRepMax);
+    public struct WorkoutSet {
+        public string uuid;
+        public int reps;
+        public int percent1RM;
+        public bool doneWithRest;
+        public TimeSpan restTime;
 
-            if (!new1rms.ContainsKey(exercise)) {
-                new1rms.Add(exercise, new List<OneRepMax>());
-            }
-            new1rms[exercise].Add(oneRepMax);
+        public int repsCompleted;
+
+        public mpObject toJSON() {
+            return new mpObject(
+                new mpProperty("uuid", new mpValue(uuid)),
+                new mpProperty("reps", new mpValue(reps)),
+                new mpProperty("percent1RM", new mpValue(percent1RM)),
+                new mpProperty("restTimeSeconds", new mpValue(restTime.TotalSeconds)),
+                new mpProperty("doneWithRest", new mpValue(doneWithRest)),
+                new mpProperty("repsCompleted", new mpValue(repsCompleted))
+            );
         }
-
-        public void Store() {
-            foreach(var exs in new1rms) {
-                foreach(var ex in exs.Value) {
-                    db.query($"INSERT INTO userinfo  VALUES ('{user.email}','{exs.Key}', {ex.reps}, {ex.weight},'{Util.DateStringFormat(ex.recorded.Value)}')");
-                }
-                exs.Value.Clear();
-            }
+        public WorkoutSet(mpObject data) {
+            uuid = ((mpValue)data.getChild("uuid")).data.asString();
+            reps = ((mpValue)data.getChild("reps")).data.asInt();
+            percent1RM = ((mpValue)data.getChild("percent1RM")).data.asInt();
+            restTime = TimeSpan.FromSeconds(((mpValue)data.getChild("restTimeSeconds")).data.asInt());
+            doneWithRest = ((mpValue)data.getChild("doneWithRest")).data.asBool();
+            repsCompleted = ((mpValue)data.getChild("repsCompleted")).data.asInt();
         }
-        public UserInfo(Database db, User user) {
-            user1rms = new Dictionary<string, List<OneRepMax>>();
-            new1rms = new Dictionary<string, List<OneRepMax>>();
+    }
+    
+    public struct WorkoutDay {
+        public List<WorkoutItem> workoutItems;
+        public string primaryGroup;
+        public string secondaryGroup;
+        public DateTime date;
+        public string uuid;
 
-            this.user = user;
-            this.db = db;
+        public mpObject toJSON(UserDataAccess user) {
+            mpObject result = new mpObject();
 
-            var data = db.query($"SELECT * FROM userinfo WHERE email = '{user.email}'");
-            for(int i = 0; i < data.Rows; i++) {
-                var row = data.GetRow(i);
-                AddLoadedOneRepMax(row[1].asString(), row[2].asInt(), row[3].asInt(), row[4].asDate());
+            result.addProperty("uuid", new mpValue(uuid));
+            result.addProperty("primaryGroup", new mpValue(primaryGroup));
+            result.addProperty("secondaryGroup", new mpValue(secondaryGroup));
+            result.addProperty("date", new mpValue(date.ToString("yyyy-MM-dd")));
+            result.addProperty("items", new mpArray(workoutItems.Select(item => item.toJSON(user)).ToArray()));
+
+            return result;
+        }
+        public WorkoutDay(mpObject data) {
+            uuid = ((mpValue)data.getChild("uuid")).data.asString();
+            primaryGroup = ((mpValue)data.getChild("primaryGroup")).data.asString();
+            secondaryGroup = ((mpValue)data.getChild("secondaryGroup")).data.asString();
+            date = Util.ParseDate(((mpValue)data.getChild("uuid")).data.asString());
+            workoutItems = new List<WorkoutItem>();
+            foreach (mpObject item in ((mpArray)data.getChild("items"))) {
+                workoutItems.Add(new WorkoutItem(item));
             }
         }
     }
