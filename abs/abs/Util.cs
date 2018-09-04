@@ -50,5 +50,26 @@ namespace abs {
 
             return new DateTime(year, month, day);
         }
+
+        public static bool IsEmail(string email) {
+            try {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            } catch {
+                return false;
+            }
+        }
+        public static bool IsBase64(string value) {
+            if (value == null || value.Length == 0 ||
+                value.Contains(" ") || value.Contains("\t") || value.Contains("\r") ||
+                value.Contains("\n"))
+                return false;
+            try {
+                Convert.FromBase64String(value);
+                return true;
+            } catch {
+                return false;
+            }
+        }
     }
 }

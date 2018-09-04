@@ -32,18 +32,12 @@ namespace abs {
         private List<User> _users;
         public readonly int maxLoadedUsers = 50;
 
-        private bool isSanitary(params string[] values) {
-            foreach (string value in values)
-                for (int i = 0; i < value.Length; i++)
-                    if (!(char.IsLetterOrDigit(value[i]) || value[i] == '+' || value[i] == '/' || value[i] == '\\' || value[i] == '=' || value[i] == '-' || value[i] == '.' || value[i] == '_' || value[i] == '@'))
-                        return false;
-            return true;
-        }
+        
         private bool emailTaken(string email) {
             foreach (User user in _users) {
                 if (email == user.email) return true;
             }
-            return _db.query("SELECT * FROM public.users WHERE email = '" + email + "'").Rows == 1;
+            return _db.query("SELECT * FROM public.users WHERE email = '" + email + "'").Rows >= 1;
         }
 
         private User queryUser(string email, string passwordEmailHash) {
@@ -86,7 +80,7 @@ namespace abs {
         }
 
         public void deleteUser(string email, string passwordEmailHash) {
-            if (!isSanitary(email, passwordEmailHash)) throw new Exception("Only a-z, A-Z, 0-9, +, /, = allowed\nemail = " + email + "\npeh = " + passwordEmailHash);
+            if (!Util.IsEmail(email) || !Util.IsBase64(passwordEmailHash)) throw new Exception("Validation failure\nemail = " + email + "\npeh = " + passwordEmailHash);
 
             User foundUser = getUser(email, passwordEmailHash);
 
@@ -98,7 +92,7 @@ namespace abs {
             }
         }
         public User createUser(string email, string passwordEmailHash) {
-            if (!isSanitary(email, passwordEmailHash)) throw new Exception("Only a-z, A-Z, 0-9, +, /, = allowed\nemail = " + email + "\npeh = " + passwordEmailHash);
+            if (!Util.IsEmail(email) || !Util.IsBase64(passwordEmailHash)) throw new Exception("Validation failure\nemail = " + email + "\npeh = " + passwordEmailHash);
 
             if (emailTaken(email)) throw new Exception("Email Already In Use");
 
@@ -114,7 +108,8 @@ namespace abs {
             return newUser;
         }
         public User getUser(string email, string passwordEmailHash) {
-            if (!isSanitary(email, passwordEmailHash)) throw new Exception("Only a-z, A-Z, 0-9, +, /, = allowed\nemail = " + email + "\npeh = " + passwordEmailHash);
+            Console.WriteLine("GetUser(" + email + ", " + passwordEmailHash + ")");
+            if (!Util.IsEmail(email) || !Util.IsBase64(passwordEmailHash)) throw new Exception("Validation failure\nemail = " + email + "\npeh = " + passwordEmailHash);
 
             User foundUser = checkCachedUser(email, passwordEmailHash);
             if (foundUser != null) return foundUser;
