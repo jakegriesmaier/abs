@@ -313,7 +313,7 @@ namespace abs {
             string connection = "Server=" + host + ";Port=5432;Username=postgres;Password=postpass;Database=postgres";
 
             Database db = new Database(connection);
-            ResetDatabase(db);
+            //ResetDatabase(db);
 
             Exercise.getAllExercises(db);
 
