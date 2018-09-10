@@ -241,14 +241,19 @@ namespace abs {
                     return -1.0;
                 }
             } else {
-                var item = relevantItems.Last();
-                if(item.difficulty == 0 || item.difficulty == 2) {
-                    return item.oneRepMax + 5;
-                } else if(item.difficulty == 1) {
-                    return Math.Max(item.difficulty - 5, 5);
-                } else {
-                    return -1.0;
+                for(int i = relevantItems.Count - 1; i >= 0; --i) {
+                    if(relevantItems[i].oneRepMax > 0.0) {
+                        var item = relevantItems[i];
+                        if (item.difficulty == 0 || item.difficulty == 2) {
+                            return item.oneRepMax + 5;
+                        } else if (item.difficulty == 1) {
+                            return Math.Max(item.difficulty - 5, 5);
+                        } else {
+                            return -1.0;
+                        }
+                    }
                 }
+                return -1.0;
             }
         }
     }
