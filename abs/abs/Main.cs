@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 
@@ -189,9 +190,9 @@ namespace abs {
                                 WorkoutGenerator p = new WorkoutGenerator(info);
 
                                 mpResponse res = mpResponse.success();
-                                var day = p.generateDay(requestNumItems);
-                                res.response = new binaryData(day.toJSON(info).ToString());
-                                info.AddDay(day);
+                                //var day = p.generateDay(requestNumItems);
+                                //res.response = new binaryData(day.toJSON(info).ToString());
+                                //info.AddDay(day);
                                 info.Store();
                                 info.Dispose();
 
@@ -320,6 +321,23 @@ namespace abs {
             Exercise.getAllExercises(db);
 
             UserManager manager = new UserManager(db);
+
+            //User bob = manager.createUser("bob", "bobtest");
+            //UserDataAccess bobaccess = new UserDataAccess(db, bob);
+            //WorkoutGenerator bobs = new WorkoutGenerator(bobaccess);
+
+            //WorkoutSession sesh = new WorkoutSession();
+            //sesh.date = DateTime.Now - TimeSpan.FromDays(1.0);
+            ////sesh.primaryGroup = "Chest";
+            ////sesh.secondaryGroup = "Back";
+            //sesh.uuid = Guid.NewGuid().ToString();
+            //sesh.workoutItems = new List<WorkoutItem>();
+            //for(int i = 0; i < 3; ++i) {
+            //    WorkoutItem item = new WorkoutItem();
+            //    item.difficulty = 2;
+            //    item.ex = Exercise.globalExercises[3];
+            //}
+            //bobaccess.AddDay(new WorkoutSession())
             
             mpBase root = new mpBase();
 
@@ -335,9 +353,6 @@ namespace abs {
             Console.ReadKey();
 
             server.stop();
-
-
-
         }
     }
 }

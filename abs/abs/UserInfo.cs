@@ -73,7 +73,7 @@ namespace abs {
         }
     }
     
-    public struct WorkoutDay {
+    public struct WorkoutSession {
         public List<WorkoutItem> workoutItems;
         public string primaryGroup;
         public string secondaryGroup;
@@ -91,7 +91,7 @@ namespace abs {
 
             return result;
         }
-        public WorkoutDay(mpObject data) {
+        public WorkoutSession(mpObject data) {
             uuid = ((mpValue)data.getChild("uuid")).data.asString();
             primaryGroup = ((mpValue)data.getChild("primaryGroup")).data.asString();
             secondaryGroup = ((mpValue)data.getChild("secondaryGroup")).data.asString();
@@ -101,5 +101,14 @@ namespace abs {
                 workoutItems.Add(new WorkoutItem(item));
             }
         }
+    }
+
+    public enum BodyPart {
+        Chest = 1,
+        Back = 2,
+        Arms = 3,
+        Abs = 4,
+        Legs = 5,
+        Shoulders = 6
     }
 }

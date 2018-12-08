@@ -6,7 +6,7 @@ namespace abs {
     public class Exercise {
         private Exercise(string ExerciseName, string mainBodypart, bool isCompound, int areaNumber, bool requiresWeight, string equipmentRequired, string equipmentRequired2, string weightrequired, bool isDoubleExercise) {
             this.exerciseName = ExerciseName;
-            this.mainBodyPart = mainBodypart;
+            this.mainBodyPart = GetMainBodyPart(mainBodypart);
             this.isCompound = isCompound;
             this.areaNumber = areaNumber;
             this.requiresWeight = requiresWeight;
@@ -25,27 +25,27 @@ namespace abs {
                             //TODO the exercise is created based on the exercises name which is retried from the database elsewhere when the plan is being created
 
         public string exerciseName;
-        public string mainBodyPart { get; private set; }
+        public BodyPart mainBodyPart { get; private set; }
         public int areaNumber;
         public string specifiedArea {
             get {
-                if (mainBodyPart == "Chest") {
+                if (mainBodyPart == BodyPart.Chest) {
                     if (areaNumber == 1) return "Middle Chest";
                     else if (areaNumber == 2) return "Upper Chest";
                     else return "Lower Chest";
-                } else if (mainBodyPart == "Legs") {
+                } else if (mainBodyPart == BodyPart.Legs) {
                     if (areaNumber == 1) return "Quads";
                     else if (areaNumber == 2) return "Hamstrings";
                     else return "Calves";
-                } else if (mainBodyPart == "Back") {
+                } else if (mainBodyPart == BodyPart.Back) {
                     if (areaNumber == 1) return "Upper Back";
                     else if (areaNumber == 2) return "Lats";
                     else return "Lower Back";
-                } else if (mainBodyPart == "Shoulders") {
+                } else if (mainBodyPart == BodyPart.Shoulders) {
                     if (areaNumber == 1) return "Front Deltiods";
                     else if (areaNumber == 2) return "Lateral Deltoids";
                     else return "Rear Deltoids/Traps";
-                } else if (mainBodyPart == "Arms") {
+                } else if (mainBodyPart == BodyPart.Arms) {
                     if (areaNumber == 1) return "Biceps";
                     else if (areaNumber == 2) return "Triceps";
                     else return "Forearms";
@@ -63,6 +63,25 @@ namespace abs {
         public string weightRequired;
         public bool isDoubleExercise;
         public string youtube;
+
+        public BodyPart GetMainBodyPart(string mainBodyPart) {
+            switch (mainBodyPart) {
+                case "Chest":
+                    return BodyPart.Chest;
+                case "Legs":
+                    return BodyPart.Legs;
+                case "Back":
+                    return BodyPart.Back;
+                case "Shoulders":
+                    return BodyPart.Shoulders;
+                case "Arms":
+                    return BodyPart.Arms;
+                case "Abdominals":
+                    return BodyPart.Abs;
+                default:
+                    throw new KeyNotFoundException("does not match list of bodyparts");
+            }
+        }
 
         public static HashSet<Exercise> getAllExercises(Database db) {
             var exercises = db.query("select * from exercises where CAST(requiresweight AS int) = 1");
@@ -122,17 +141,6 @@ namespace abs {
             return null;
         }
 
-        public static HashSet<Exercise> whereAreaIs(HashSet<Exercise> exercises, string mainbodypart) {
-            HashSet<Exercise> res = new HashSet<Exercise>();
-            foreach (Exercise ex in exercises) {
-                if (string.Compare(ex.mainBodyPart, mainbodypart, true) == 0) {
-                    res.Add(ex);
-                }
-            }
-
-            return res;
-        }
-
         public static HashSet<Exercise> onlycompound(HashSet<Exercise> exercises) {
             return new HashSet<Exercise>(exercises.Where(e => e.isCompound));
         }
@@ -160,5 +168,4 @@ namespace abs {
                new mpProperty("hasBeenCalibrated", new mpValue(user.GetMostRecentCalibratedOneRepMax(exerciseName).Exists)));
         }
     }
-
 }

@@ -59,14 +59,14 @@ namespace abs {
         }
 
 
-        private List<WorkoutDay> oldDays = new List<WorkoutDay>();
-        private List<WorkoutDay> newDays = new List<WorkoutDay>();
+        private List<WorkoutSession> oldDays = new List<WorkoutSession>();
+        private List<WorkoutSession> newDays = new List<WorkoutSession>();
         private List<WorkoutItem> updatedItems = new List<WorkoutItem>();
-        private void LoadAllWorkouts() {
-            QueryResult days = db.query("SELECT * FROM workoutdays WHERE associateduser='" + user.email + "';");
+        private void LoadWorkoutsAfter(DateTime start) {
+            QueryResult days = db.query("SELECT * FROM workoutdays WHERE associateduser='" + user.email + "' AND workoutdate>='" + Util.DateStringFormat(start) + "';");
 
             for (int i = 0; i < days.Rows; i++) {
-                this.oldDays.Add(new WorkoutDay {
+                this.oldDays.Add(new WorkoutSession {
                     workoutItems = new List<WorkoutItem> { },
                     primaryGroup = days.GetField("primarygroup", i).asString(),
                     secondaryGroup = days.GetField("secondarygroup", i).asString(),
@@ -75,7 +75,7 @@ namespace abs {
                 });
             }
 
-            foreach (WorkoutDay d in oldDays) {
+            foreach (WorkoutSession d in oldDays) {
                 QueryResult items = db.query("SELECT * FROM workoutitems WHERE associatedday ='" + d.uuid + "';");
 
                 for (int i = 0; i < items.Rows; i++) {
@@ -107,7 +107,7 @@ namespace abs {
             }
         }
         private void StoreAllWorkouts() {
-            foreach (WorkoutDay day in newDays) {
+            foreach (WorkoutSession day in newDays) {
                 string dayid = Guid.NewGuid().ToString();
                 string associatedUser = user.email;
                 string workoutdate = day.date.ToString("yyyy-MM-dd");
@@ -160,13 +160,13 @@ namespace abs {
             }
             throw new Exception("couldn't find workout item");
         }
-        public List<WorkoutDay> GetAllDays() {
+        public List<WorkoutSession> GetAllSessions() {
             return oldDays.Concat(newDays).ToList();
         }
         public List<WorkoutItem> GetItemsWithExercise(Exercise ex) {
-            return GetAllDays().SelectMany(day => day.workoutItems.Where(item => item.ex.exerciseName == ex.exerciseName)).ToList();
+            return GetAllSessions().SelectMany(day => day.workoutItems.Where(item => item.ex.exerciseName == ex.exerciseName)).ToList();
         }
-        public void AddDay(WorkoutDay day) {
+        public void AddDay(WorkoutSession day) {
             newDays.Add(day);
         }
         public void UpdateItem(WorkoutItem item) {
@@ -186,7 +186,7 @@ namespace abs {
             this.db = db;
 
             LoadAllCalibrations();
-            LoadAllWorkouts();
+            LoadWorkoutsAfter(DateTime.Now - new TimeSpan(21, 0, 0, 0, 0));
         }
     }
 }

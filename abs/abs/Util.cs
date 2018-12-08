@@ -15,6 +15,18 @@ namespace abs {
             if (set.Count == 0) throw new Exception("randomElement can't take an empty HashSet<...>");
             return set.ToArray()[rand(set.Count)];
         }
+        public static HashSet<T> selectRandomUniqueN<T>(this HashSet<T> set, int N) {
+            HashSet<T> copy = new HashSet<T>(set);
+            HashSet<T> res = new HashSet<T>();
+            for(int i = 0; i < N; ++i) {
+                T selected = copy.randomElement();
+                res.Add(selected);
+                copy.Remove(selected);
+            }
+            return res;
+        }
+
+        public static 
 
         public static SHA256Managed hasher = null;
         public static string hash(string val) {
@@ -32,8 +44,12 @@ namespace abs {
 
         public static Random r;
         public static int rand(int max) {
-            if (r == null) r = new Random();
+            if (r == null) r = new Random(420_69);
             return r.Next(max);
+        }
+        public static double rand(double start, double end) {
+            if (r == null) r = new Random(420_69);
+            return start + r.NextDouble() * (end - start);
         }
         public static string randomHash() {
             if (r == null) r = new Random();
