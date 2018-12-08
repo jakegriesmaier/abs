@@ -11,12 +11,12 @@ namespace abs {
     class Abs {
         static void ResetDatabase(Database db) {
             //refresh users table
-            db.deleteTableIfExists("users");
+            /*db.deleteTableIfExists("users");
             db.createTableIfNeeded("users", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
                 new KeyValuePair<string, string>("email", "text"),
                 new KeyValuePair<string, string>("salt", "text"),
                 new KeyValuePair<string, string>("passwordHashHash", "text")
-            }));
+            }));*/
 
             db.deleteTableIfExists("usercalibration");
             db.createTableIfNeeded("usercalibration", new List<KeyValuePair<string, string>>(new KeyValuePair<string, string>[] {
@@ -316,7 +316,7 @@ namespace abs {
             string connection = "Server=" + host + ";Port=5432;Username=postgres;Password=postpass;Database=postgres";
 
             Database db = new Database(connection);
-            //ResetDatabase(db);
+            ResetDatabase(db);
 
             Exercise.getAllExercises(db);
 
