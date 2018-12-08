@@ -134,8 +134,7 @@ namespace abs {
 
             CalculateExerciseProgress();
 
-            CalculateExercises();
-
+            CalculateExercises(BodyPart.Chest, new Tuple<int, int, int>(3, 3, 2));
 
             WorkoutSession res = new WorkoutSession();
 

@@ -26,8 +26,6 @@ namespace abs {
             return res;
         }
 
-        public static 
-
         public static SHA256Managed hasher = null;
         public static string hash(string val) {
             //if(hasher == null) hasher = HashFactory.Crypto.SHA3.CreateKeccak256();
