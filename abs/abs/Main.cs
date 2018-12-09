@@ -322,6 +322,52 @@ namespace abs {
 
             UserManager manager = new UserManager(db);
 
+            var us = manager.getUser("bob@bob.com", Util.hash("bob" + "bob@bob.com"));
+
+            ProgressStatistics st = new ProgressStatistics();
+            st.MakePdf();
+
+            //using (UserDataAccess ac = new UserDataAccess(db, us)) {
+            //    for(int d = 0; d < 50; ++d) {
+            //        WorkoutSession session = new WorkoutSession();
+            //        session.workoutItems = new List<WorkoutItem>();
+            //        session.uuid = Guid.NewGuid().ToString();
+            //        session.date = DateTime.Now + TimeSpan.FromDays(d - 25);
+            //        session.primaryGroup = ((BodyPart)(1 + Util.rand(6))).ToString();
+            //        session.secondaryGroup = "this does not matter";
+
+            //        for (int i = 0; i < 6; i++) {
+            //            WorkoutItem item = new WorkoutItem();
+
+            //            item.ex = Exercise.globalExercises.randomElement();
+            //            item.oneRepMax = Util.rand(0.0, 50.0);
+            //            item.sets = new List<WorkoutSet>();
+            //            item.uuid = Guid.NewGuid().ToString();
+            //            item.difficulty = 2;
+
+            //            for(int j = 0; j < (3 + Util.rand(3)); j++) {
+            //                WorkoutSet set = new WorkoutSet();
+            //                set.percent1RM = 75;
+            //                set.uuid = Guid.NewGuid().ToString();
+            //                set.reps = 10;
+            //                set.repsCompleted = 10;
+            //                set.doneWithRest = true;
+            //                set.restTime = TimeSpan.FromSeconds(4);
+
+            //                item.sets.Add(set);
+            //            }
+
+            //            session.workoutItems.Add(item);
+            //        }
+
+            //        ac.AddDay(session);
+            //    }
+            //    ac.Store();
+
+            //    WorkoutGenerator gen = new WorkoutGenerator(ac);
+            //    Console.WriteLine(gen.ToString());
+            //}
+
             //User bob = manager.createUser("bob", "bobtest");
             //UserDataAccess bobaccess = new UserDataAccess(db, bob);
             //WorkoutGenerator bobs = new WorkoutGenerator(bobaccess);

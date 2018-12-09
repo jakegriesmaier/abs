@@ -12,9 +12,11 @@ namespace abs {
         private Dictionary<Exercise, ProgressStatistics> stats = new Dictionary<Exercise, ProgressStatistics>();
 
         private HashSet<Exercise> exercises;
+        private HashSet<Exercise> recentExercises = new HashSet<Exercise>(); 
 
         private void CalculateBodyPartVolumes() {
             List<WorkoutSession> sessions = user.GetAllSessions();
+            sessions.Sort((lhs, rhs) => (rhs.date - lhs.date).Ticks > 0 ? 1 : -1);
 
             bool anyFound = false;
             DateTime firstFound = DateTime.MinValue;
@@ -36,10 +38,20 @@ namespace abs {
             DateTime endDate = firstFound;
             List<WorkoutSession> relevant = sessions.Where(session => (session.date <= endDate && session.date >= startDate)).ToList();
 
-            int[] days = new int[7]; //0 = today
+            recentExercises = new HashSet<Exercise>();
+            relevant.ForEach(sesh => {
+                sesh.workoutItems.ForEach(item => {
+                    recentExercises.Add(item.ex);
+                });
+            });
 
-            Dictionary<BodyPart, Tuple<int, int, int>> history =
-                (Dictionary<BodyPart, Tuple<int, int, int>>)((BodyPart[])Enum.GetValues(typeof(BodyPart))).Select(part => new KeyValuePair<BodyPart, Tuple<int, int, int>>(part, new Tuple<int, int, int>(0,0,0)));
+            Dictionary<BodyPart, Tuple<int, int, int>> history = new Dictionary<BodyPart, Tuple<int, int, int>>();
+            history.Add(BodyPart.Abs, new Tuple<int, int, int>(0, 0, 0));
+            history.Add(BodyPart.Arms, new Tuple<int, int, int>(0, 0, 0));
+            history.Add(BodyPart.Back, new Tuple<int, int, int>(0, 0, 0));
+            history.Add(BodyPart.Chest, new Tuple<int, int, int>(0, 0, 0));
+            history.Add(BodyPart.Legs, new Tuple<int, int, int>(0, 0, 0));
+            history.Add(BodyPart.Shoulders, new Tuple<int, int, int>(0, 0, 0));
             if (relevant.Count > 0) {
                 relevant.ForEach(sesh =>
                     sesh.workoutItems.ForEach(item => {
@@ -64,6 +76,12 @@ namespace abs {
             var sorted = history.ToList();
             sorted.Sort((lhs, rhs) => (lhs.Value.Item1 + lhs.Value.Item2 + lhs.Value.Item3) - (rhs.Value.Item1 + rhs.Value.Item2 + rhs.Value.Item3));
 
+            Console.WriteLine("Body part volumes:");
+            foreach(var something in sorted) {
+                Console.WriteLine(something.Key.ToString() + " = ");
+                Console.WriteLine("\t" + something.Value.Item1 + ", " + something.Value.Item2 + ", " + something.Value.Item3);
+            }
+
             bodyPartVolume = sorted;
         }
         
@@ -80,8 +98,11 @@ namespace abs {
                 }
             }
 
+            Console.WriteLine("Exercise scores:");
             foreach(var kvp in stats) {
                 kvp.Value.Finish();
+                Console.WriteLine(kvp.Key.exerciseName + " = ");
+                Console.WriteLine("\tLin_Slope = " + kvp.Value.Lin_Slope + "\n\tLin_Significance = " + kvp.Value.Lin_Significance);
             }
         }
 
@@ -107,17 +128,20 @@ namespace abs {
             foreach (Exercise ex in g1s) {
                 const double baseScore = 0.1;
                 double score = stats.ContainsKey(ex) ? stats[ex].Lin_Slope * stats[ex].Lin_Significance : 0.0;
-                dg1[ex] = baseScore + score;
+                dg1[ex] = Math.Max((recentExercises.Contains(ex) ? 0.3 : 0) + baseScore + score, 0.0);
+                Console.WriteLine(ex.exerciseName + ", " + dg1[ex]);
             }
             foreach (Exercise ex in g2s) {
                 const double baseScore = 0.1;
                 double score = stats.ContainsKey(ex) ? stats[ex].Lin_Slope * stats[ex].Lin_Significance : 0.0;
-                dg2[ex] = baseScore + score;
+                dg2[ex] = Math.Max((recentExercises.Contains(ex) ? 0.3 : 0) + baseScore + score, 0.0);
+                Console.WriteLine(ex.exerciseName + ", " + dg2[ex]);
             }
             foreach (Exercise ex in g3s) {
                 const double baseScore = 0.1;
                 double score = stats.ContainsKey(ex) ? stats[ex].Lin_Slope * stats[ex].Lin_Significance : 0.0;
-                dg3[ex] = baseScore + score;
+                dg3[ex] = Math.Max((recentExercises.Contains(ex) ? 0.3 : 0) + baseScore + score, 0.0);
+                Console.WriteLine(ex.exerciseName + ", " + dg3[ex]);
             }
 
             //pick a bunch of random exercises from the subgroup sets we've found earlier
@@ -125,16 +149,15 @@ namespace abs {
             res.UnionWith(dg2.selectN_unique(groupNums.Item2));
             res.UnionWith(dg3.selectN_unique(groupNums.Item3));
 
+            Console.WriteLine("Chosen exercises:");
+            foreach(Exercise ex in res) {
+                Console.WriteLine(ex.exerciseName);
+            }
+
             exercises = res;
         }
 
         WorkoutSession GenSesh(int workoutSlots, HashSet<BodyPart> rejected = null) {
-
-            CalculateBodyPartVolumes();
-
-            CalculateExerciseProgress();
-
-            CalculateExercises(BodyPart.Chest, new Tuple<int, int, int>(3, 3, 2));
 
             WorkoutSession res = new WorkoutSession();
 
@@ -144,7 +167,11 @@ namespace abs {
         public WorkoutGenerator(UserDataAccess user) {
             this.user = user;
 
+            CalculateBodyPartVolumes();
 
+            CalculateExerciseProgress();
+
+            CalculateExercises(BodyPart.Chest, new Tuple<int, int, int>(3, 3, 2));
         }
     }
 }

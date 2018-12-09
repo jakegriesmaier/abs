@@ -76,7 +76,7 @@ namespace abs {
                     return BodyPart.Shoulders;
                 case "Arms":
                     return BodyPart.Arms;
-                case "Abdominals":
+                case "Abs":
                     return BodyPart.Abs;
                 default:
                     throw new KeyNotFoundException("does not match list of bodyparts");

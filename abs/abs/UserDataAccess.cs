@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using monopage;
 
 
@@ -107,6 +108,9 @@ namespace abs {
             }
         }
         private void StoreAllWorkouts() {
+            StringBuilder command = new StringBuilder();
+
+
             foreach (WorkoutSession day in newDays) {
                 string dayid = Guid.NewGuid().ToString();
                 string associatedUser = user.email;
@@ -114,7 +118,9 @@ namespace abs {
                 string primarygroup = day.primaryGroup;
                 string secondarygroup = day.secondaryGroup;
                 int itemcount = day.workoutItems.Count();
-                db.query(String.Format("INSERT INTO workoutdays VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', {5});",
+
+                command.AppendLine(
+                    String.Format("INSERT INTO workoutdays VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', {5});",
                     dayid, associatedUser, workoutdate, primarygroup, secondarygroup, itemcount));
 
                 foreach (WorkoutItem item in day.workoutItems) {
@@ -123,7 +129,8 @@ namespace abs {
                     string exercisename = item.ex.exerciseName;
                     int setcount = item.sets.Count();
                     int difficulty = item.difficulty;
-                    db.query(String.Format("INSERT INTO workoutitems VALUES ('{0}', '{1}', '{2}', {3}, {4}, {5});",
+                    
+                    command.AppendLine(String.Format("INSERT INTO workoutitems VALUES ('{0}', '{1}', '{2}', {3}, {4}, {5});",
                         itemid, associatedday, exercisename, setcount, difficulty, item.oneRepMax));
 
                     foreach (WorkoutSet s in item.sets) {
@@ -134,7 +141,7 @@ namespace abs {
                         float resttime = (float)s.restTime.TotalSeconds;
                         int feedbackreps = s.repsCompleted;
 
-                        db.query(String.Format("INSERT INTO workoutsets VALUES ('{0}', '{1}', {2}, {3}, {4}, {5});",
+                        command.AppendLine(String.Format("INSERT INTO workoutsets VALUES ('{0}', '{1}', {2}, {3}, {4}, {5});",
                             uuid, associateditem, reps, percent1rm, resttime, feedbackreps));
                     }
                 }
@@ -149,6 +156,8 @@ namespace abs {
                 }
             }
             updatedItems.Clear();
+
+            db.query(command.ToString());
         }
         public WorkoutItem FindItem(string uuid) {
             for (int i = 0; i < oldDays.Count; i++) {
@@ -179,6 +188,7 @@ namespace abs {
             StoreAllWorkouts();
         }
         public void Dispose() {
+            Console.WriteLine("Dispose Happened!");
         }
 
         public UserDataAccess(Database db, User user) {

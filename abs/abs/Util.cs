@@ -40,17 +40,18 @@ namespace abs {
             return plainResult;
         }
 
+        public const int seed = 74975;
         public static Random r;
         public static int rand(int max) {
-            if (r == null) r = new Random(420_69);
+            if (r == null) r = new Random(seed);
             return r.Next(max);
         }
         public static double rand(double start, double end) {
-            if (r == null) r = new Random(420_69);
+            if (r == null) r = new Random(seed);
             return start + r.NextDouble() * (end - start);
         }
         public static string randomHash() {
-            if (r == null) r = new Random();
+            if (r == null) r = new Random(seed);
             return hash(r.Next().ToString());
         }
 

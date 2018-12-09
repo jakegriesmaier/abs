@@ -21,7 +21,7 @@ namespace abs {
             total = weights.Select(kvp => kvp.Value).Sum();
         }
         public double this[T index] {
-            get { return weights[index]; }
+            get { return weights.ContainsKey(index) ? weights[index] : 0.0; }
             set { setWeight(index, value); }
         }
 

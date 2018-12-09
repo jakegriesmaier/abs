@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using OxyPlot.Pdf;
 
 namespace abs {
     public class ProgressStatistics {
@@ -14,10 +15,17 @@ namespace abs {
 
         //linear regression
         private double Lin_M, Lin_B;
-        public double Lin_Slope => Lin_M * Unit_Y / Unit_X.TotalDays;
+        public double Lin_Slope => points == null ? 0 : (Lin_M * Unit_Y / Unit_X.TotalDays);
         public double Lin_Significance => Math.Max(0, Math.Min(10, (points == null) ? 0 : (points.Count - 2))) * 0.1; //0 if there are no data points
 
-
+        public void MakePdf() {
+            OxyPlot.PdfRenderContext ctx = new OxyPlot.PdfRenderContext(500.0, 500.0, OxyPlot.OxyColor.FromRgb(255, 255, 255));
+            ctx.DrawText(new OxyPlot.ScreenPoint(250, 250), "test", OxyPlot.OxyColor.FromRgb(0, 0, 0), "Consolas", 100, 10.0, 0.0, OxyPlot.HorizontalAlignment.Center, OxyPlot.VerticalAlignment.Middle, null);
+            System.IO.FileStream st = new System.IO.FileStream("output.pdf", System.IO.FileMode.Create);
+            ctx.Save(st);
+            st.Close();
+        }
+  
 
         public void Finish() {
             LinearRegression();
@@ -82,7 +90,7 @@ namespace abs {
 
             points = new List<Vec2>(rawData.Count);
             for(int i = 0; i < rawData.Count; i++) {
-                points[i] = new Vec2((rawData[i].Key - Origin_X).Ticks / (double) Unit_X.Ticks, (rawData[i].Value - Origin_Y) / Unit_Y);
+                points.Add(new Vec2((rawData[i].Key - Origin_X).Ticks / (double) Unit_X.Ticks, (rawData[i].Value - Origin_Y) / Unit_Y));
             }
         }
 
