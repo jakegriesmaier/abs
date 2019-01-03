@@ -324,8 +324,8 @@ namespace abs {
 
             var us = manager.getUser("bob@bob.com", Util.hash("bob" + "bob@bob.com"));
 
-            ProgressStatistics st = new ProgressStatistics();
-            st.MakePdf();
+            //ProgressStatistics st = new ProgressStatistics();
+            //st.MakePdf();
 
             //using (UserDataAccess ac = new UserDataAccess(db, us)) {
             //    for(int d = 0; d < 50; ++d) {
