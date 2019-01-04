@@ -13,12 +13,43 @@ namespace abs {
         public double Value => (1 + reps / 30.0) * weight;
     }
 
+    public struct WorkoutSession {
+        public List<WorkoutItem> workoutItems;
+        public string primaryGroup;
+        public string secondaryGroup;
+        public DateTime date;
+        public string uuid;
+
+        public mpObject toJSON(UserDataAccess user) {
+            mpObject result = new mpObject();
+
+            result.addProperty("uuid", new mpValue(uuid));
+            result.addProperty("primaryGroup", new mpValue(primaryGroup));
+            result.addProperty("secondaryGroup", new mpValue(secondaryGroup));
+            result.addProperty("date", new mpValue(date.ToString("yyyy-MM-dd")));
+            result.addProperty("items", new mpArray(workoutItems.Select(item => item.toJSON(user)).ToArray()));
+
+            return result;
+        }
+        public WorkoutSession(mpObject data) {
+            uuid = ((mpValue)data.getChild("uuid")).data.asString();
+            primaryGroup = ((mpValue)data.getChild("primaryGroup")).data.asString();
+            secondaryGroup = ((mpValue)data.getChild("secondaryGroup")).data.asString();
+            date = Util.ParseDate(((mpValue)data.getChild("uuid")).data.asString());
+            workoutItems = new List<WorkoutItem>();
+            foreach (mpObject item in ((mpArray)data.getChild("items"))) {
+                workoutItems.Add(new WorkoutItem(item));
+            }
+        }
+    }
+
     public struct WorkoutItem {
         public string uuid;
         public Exercise ex;
         public List<WorkoutSet> sets;
         public int difficulty;
         public double oneRepMax;
+        // TODO: add statistics in this struct
 
         public mpObject toJSON(UserDataAccess user) {
             mpObject result = new mpObject();
@@ -73,35 +104,7 @@ namespace abs {
         }
     }
     
-    public struct WorkoutSession {
-        public List<WorkoutItem> workoutItems;
-        public string primaryGroup;
-        public string secondaryGroup;
-        public DateTime date;
-        public string uuid;
-
-        public mpObject toJSON(UserDataAccess user) {
-            mpObject result = new mpObject();
-
-            result.addProperty("uuid", new mpValue(uuid));
-            result.addProperty("primaryGroup", new mpValue(primaryGroup));
-            result.addProperty("secondaryGroup", new mpValue(secondaryGroup));
-            result.addProperty("date", new mpValue(date.ToString("yyyy-MM-dd")));
-            result.addProperty("items", new mpArray(workoutItems.Select(item => item.toJSON(user)).ToArray()));
-
-            return result;
-        }
-        public WorkoutSession(mpObject data) {
-            uuid = ((mpValue)data.getChild("uuid")).data.asString();
-            primaryGroup = ((mpValue)data.getChild("primaryGroup")).data.asString();
-            secondaryGroup = ((mpValue)data.getChild("secondaryGroup")).data.asString();
-            date = Util.ParseDate(((mpValue)data.getChild("uuid")).data.asString());
-            workoutItems = new List<WorkoutItem>();
-            foreach (mpObject item in ((mpArray)data.getChild("items"))) {
-                workoutItems.Add(new WorkoutItem(item));
-            }
-        }
-    }
+    
 
     public enum BodyPart {
         Chest = 1,

@@ -4,17 +4,24 @@ using System.Linq;
 using monopage;
 
 namespace abs {
+    using volume = Int32;
+    using setCount = Int32;
+    using ExerciseStatistics = Dictionary<Exercise, ProgressStatistics>;
+
+    struct ExerciseHistory {
+        public HashSet<Exercise> recentExercises; //exercises that occurred with the past set time period
+        public List<KeyValuePair<BodyPart, Tuple<volume, volume, volume>>> bodyPartVolumes; //volume of body parts from recentExercises
+        public Dictionary<Exercise, ProgressStatistics> exerciseStatistics; //statatics of 
+    }
+
+
     public class WorkoutGenerator {
         private UserDataAccess user;
 
-        private List<KeyValuePair<BodyPart, Tuple<int, int, int>>> bodyPartVolume;
+        
+        private ExerciseHistory CalculateBodyPartVolumes() {
+            ExerciseHistory res = new ExerciseHistory();
 
-        private Dictionary<Exercise, ProgressStatistics> stats = new Dictionary<Exercise, ProgressStatistics>();
-
-        private HashSet<Exercise> exercises;
-        private HashSet<Exercise> recentExercises = new HashSet<Exercise>(); 
-
-        private void CalculateBodyPartVolumes() {
             List<WorkoutSession> sessions = user.GetAllSessions();
             sessions.Sort((lhs, rhs) => (rhs.date - lhs.date).Ticks > 0 ? 1 : -1);
 
@@ -34,58 +41,76 @@ namespace abs {
                 if (anyFound) break;
             }
 
-            DateTime startDate = firstFound - new TimeSpan(7, 0, 0, 0, 0); //ein woch
-            DateTime endDate = firstFound;
-            List<WorkoutSession> relevant = sessions.Where(session => (session.date <= endDate && session.date >= startDate)).ToList();
+            if (anyFound) {
 
-            recentExercises = new HashSet<Exercise>();
-            relevant.ForEach(sesh => {
-                sesh.workoutItems.ForEach(item => {
-                    recentExercises.Add(item.ex);
-                });
-            });
+                DateTime startDate = firstFound - new TimeSpan(7, 0, 0, 0, 0); //ein woch
+                DateTime endDate = firstFound;
+                List<WorkoutSession> relevant = sessions.Where(session => (session.date <= endDate && session.date >= startDate)).ToList();
 
-            Dictionary<BodyPart, Tuple<int, int, int>> history = new Dictionary<BodyPart, Tuple<int, int, int>>();
-            history.Add(BodyPart.Abs, new Tuple<int, int, int>(0, 0, 0));
-            history.Add(BodyPart.Arms, new Tuple<int, int, int>(0, 0, 0));
-            history.Add(BodyPart.Back, new Tuple<int, int, int>(0, 0, 0));
-            history.Add(BodyPart.Chest, new Tuple<int, int, int>(0, 0, 0));
-            history.Add(BodyPart.Legs, new Tuple<int, int, int>(0, 0, 0));
-            history.Add(BodyPart.Shoulders, new Tuple<int, int, int>(0, 0, 0));
-            if (relevant.Count > 0) {
-                relevant.ForEach(sesh =>
+                res.recentExercises = new HashSet<Exercise>();
+                relevant.ForEach(sesh => {
                     sesh.workoutItems.ForEach(item => {
+                        res.recentExercises.Add(item.ex);
+                    });
+                });
+
+                Dictionary<BodyPart, Tuple<int, int, int>> history = new Dictionary<BodyPart, Tuple<int, int, int>>();
+                history.Add(BodyPart.Abs, new Tuple<int, int, int>(0, 0, 0));
+                history.Add(BodyPart.Arms, new Tuple<int, int, int>(0, 0, 0));
+                history.Add(BodyPart.Back, new Tuple<int, int, int>(0, 0, 0));
+                history.Add(BodyPart.Chest, new Tuple<int, int, int>(0, 0, 0));
+                history.Add(BodyPart.Legs, new Tuple<int, int, int>(0, 0, 0));
+                history.Add(BodyPart.Shoulders, new Tuple<int, int, int>(0, 0, 0));
+                if (relevant.Count > 0) {
+                    relevant.ForEach(sesh =>
+                        sesh.workoutItems.ForEach(item => {
                             if (item.ex.areaNumber == 1) {
                                 Tuple<int, int, int> val = history[item.ex.mainBodyPart];
                                 history[item.ex.mainBodyPart] =
-                                new Tuple<int,int,int>(item.sets.Select(set => set.reps * set.percent1RM).Aggregate((val0, val1) => val0 + val1), val.Item2, val.Item3);
-                            } else if(item.ex.areaNumber == 2) {
+                            new Tuple<int, int, int>(item.sets.Select(set => set.reps * set.percent1RM).Aggregate((val0, val1) => val0 + val1), val.Item2, val.Item3);
+                            } else if (item.ex.areaNumber == 2) {
                                 Tuple<int, int, int> val = history[item.ex.mainBodyPart];
                                 history[item.ex.mainBodyPart] =
-                                new Tuple<int, int, int>(val.Item1, item.sets.Select(set => set.reps * set.percent1RM).Aggregate((val0, val1) => val0 + val1), val.Item3);
+                            new Tuple<int, int, int>(val.Item1, item.sets.Select(set => set.reps * set.percent1RM).Aggregate((val0, val1) => val0 + val1), val.Item3);
                             } else {
                                 Tuple<int, int, int> val = history[item.ex.mainBodyPart];
                                 history[item.ex.mainBodyPart] =
-                                new Tuple<int, int, int>(val.Item1, val.Item2, item.sets.Select(set => set.reps * set.percent1RM).Aggregate((val0, val1) => val0 + val1));
+                            new Tuple<int, int, int>(val.Item1, val.Item2, item.sets.Select(set => set.reps * set.percent1RM).Aggregate((val0, val1) => val0 + val1));
                             }
                         }
-                    )
-                );
+                        )
+                    );
+                }
+
+                var sorted = history.ToList();
+                sorted.Sort((lhs, rhs) => (lhs.Value.Item1 + lhs.Value.Item2 + lhs.Value.Item3) - (rhs.Value.Item1 + rhs.Value.Item2 + rhs.Value.Item3));
+
+                Console.WriteLine("Body part volumes:");
+                foreach (var something in sorted) {
+                    Console.WriteLine(something.Key.ToString() + " = ");
+                    Console.WriteLine("\t" + something.Value.Item1 + ", " + something.Value.Item2 + ", " + something.Value.Item3);
+                }
+
+                res.bodyPartVolumes = sorted;
+            } else {
+                res.bodyPartVolumes = new List<KeyValuePair<BodyPart, Tuple<int, int, int>>>();
+                res.bodyPartVolumes.Add(new KeyValuePair<BodyPart, Tuple<int, int, int>>(BodyPart.Abs, new Tuple<int, int, int>(0, 0, 0)));
+                res.bodyPartVolumes.Add(new KeyValuePair<BodyPart, Tuple<int, int, int>>(BodyPart.Arms, new Tuple<int, int, int>(0, 0, 0)));
+                res.bodyPartVolumes.Add(new KeyValuePair<BodyPart, Tuple<int, int, int>>(BodyPart.Back, new Tuple<int, int, int>(0, 0, 0)));
+                res.bodyPartVolumes.Add(new KeyValuePair<BodyPart, Tuple<int, int, int>>(BodyPart.Chest, new Tuple<int, int, int>(0, 0, 0)));
+                res.bodyPartVolumes.Add(new KeyValuePair<BodyPart, Tuple<int, int, int>>(BodyPart.Legs, new Tuple<int, int, int>(0, 0, 0)));
+                res.bodyPartVolumes.Add(new KeyValuePair<BodyPart, Tuple<int, int, int>>(BodyPart.Shoulders, new Tuple<int, int, int>(0, 0, 0)));
+                res.recentExercises = new HashSet<Exercise>();
             }
-
-            var sorted = history.ToList();
-            sorted.Sort((lhs, rhs) => (lhs.Value.Item1 + lhs.Value.Item2 + lhs.Value.Item3) - (rhs.Value.Item1 + rhs.Value.Item2 + rhs.Value.Item3));
-
-            Console.WriteLine("Body part volumes:");
-            foreach(var something in sorted) {
-                Console.WriteLine(something.Key.ToString() + " = ");
-                Console.WriteLine("\t" + something.Value.Item1 + ", " + something.Value.Item2 + ", " + something.Value.Item3);
-            }
-
-            bodyPartVolume = sorted;
+            return res;
         }
-        
-        private void CalculateExerciseProgress() {
+
+
+        private HashSet<Exercise> exercises;
+        private Dictionary<Exercise, ProgressStatistics> CalculateExerciseProgress(ExerciseHistory history) {
+            Dictionary<Exercise, ProgressStatistics> stats = new Dictionary<Exercise, ProgressStatistics>();
+            HashSet<Exercise> recentExercises = new HashSet<Exercise>();
+
             List<WorkoutSession> allSessions = user.GetAllSessions();
 
             foreach(WorkoutSession session in allSessions) {
@@ -104,9 +129,21 @@ namespace abs {
                 Console.WriteLine(kvp.Key.exerciseName + " = ");
                 Console.WriteLine("\tLin_Slope = " + kvp.Value.Lin_Slope + "\n\tLin_Significance = " + kvp.Value.Lin_Significance);
             }
+
+            return stats;
         }
 
-        private void CalculateExercises(BodyPart part, Tuple<int, int, int> groupNums) {
+
+        
+        private void CalculateSubgroups(BodyPart part) {
+
+        }
+
+        private void CalculateBodyParts() {
+
+        }
+
+        private void CalculateExercises(Dictionary<Exercise, ProgressStatistics> stats, BodyPart part, Tuple<setCount, setCount, setCount> groupNums) {
             HashSet<Exercise> res = new HashSet<Exercise>();
 
             //first pick a random subgroup and find an exercise that is compound
