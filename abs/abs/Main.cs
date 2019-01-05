@@ -324,8 +324,13 @@ namespace abs {
 
             var us = manager.getUser("bob@bob.com", Util.hash("bob" + "bob@bob.com"));
 
-            //ProgressStatistics st = new ProgressStatistics();
-            //st.MakePdf();
+            ProgressStatistics st = new ProgressStatistics();
+            for(int i = 0; i < 200; i++) {
+                st.AddDataPoint(DateTime.Now + TimeSpan.FromMinutes(i), (i / 200.0) * Math.Sin(i * 0.1));
+            }
+            st.Finish();
+            var fout = new FileStream("output.pdf", FileMode.Create);
+            st.MakePdf("One-Rep-Max over time", fout);
 
             //using (UserDataAccess ac = new UserDataAccess(db, us)) {
             //    for(int d = 0; d < 50; ++d) {

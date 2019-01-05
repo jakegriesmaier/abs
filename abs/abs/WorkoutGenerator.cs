@@ -165,19 +165,19 @@ namespace abs {
             foreach (Exercise ex in g1s) {
                 const double baseScore = 0.1;
                 double score = stats.ContainsKey(ex) ? stats[ex].Lin_Slope * stats[ex].Lin_Significance : 0.0;
-                dg1[ex] = Math.Max((recentExercises.Contains(ex) ? 0.3 : 0) + baseScore + score, 0.0);
+                //dg1[ex] = Math.Max((recentExercises.Contains(ex) ? 0.3 : 0) + baseScore + score, 0.0);
                 Console.WriteLine(ex.exerciseName + ", " + dg1[ex]);
             }
             foreach (Exercise ex in g2s) {
                 const double baseScore = 0.1;
                 double score = stats.ContainsKey(ex) ? stats[ex].Lin_Slope * stats[ex].Lin_Significance : 0.0;
-                dg2[ex] = Math.Max((recentExercises.Contains(ex) ? 0.3 : 0) + baseScore + score, 0.0);
+                //dg2[ex] = Math.Max((recentExercises.Contains(ex) ? 0.3 : 0) + baseScore + score, 0.0);
                 Console.WriteLine(ex.exerciseName + ", " + dg2[ex]);
             }
             foreach (Exercise ex in g3s) {
                 const double baseScore = 0.1;
                 double score = stats.ContainsKey(ex) ? stats[ex].Lin_Slope * stats[ex].Lin_Significance : 0.0;
-                dg3[ex] = Math.Max((recentExercises.Contains(ex) ? 0.3 : 0) + baseScore + score, 0.0);
+                //dg3[ex] = Math.Max((recentExercises.Contains(ex) ? 0.3 : 0) + baseScore + score, 0.0);
                 Console.WriteLine(ex.exerciseName + ", " + dg3[ex]);
             }
 
@@ -206,9 +206,9 @@ namespace abs {
 
             CalculateBodyPartVolumes();
 
-            CalculateExerciseProgress();
+            //CalculateExerciseProgress();
 
-            CalculateExercises(BodyPart.Chest, new Tuple<int, int, int>(3, 3, 2));
+            //CalculateExercises(BodyPart.Chest, new Tuple<int, int, int>(3, 3, 2));
         }
     }
 }
