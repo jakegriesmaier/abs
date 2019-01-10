@@ -1,14 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace abs {
     public static class Util {
-        public static int percent1RM(int percent, int weight) {
+        public static int calculate1RM(int percent, int weight) {
             return (int)(Math.Ceiling((weight * (percent / 100.0)) / 5) * 5);
+        }
+
+        /// <summary>
+        /// calculates the max percentage of a one rep max can be lifted if performing this number of reps
+        /// </summary>
+        /// <param name="reps">the number of reps we are checking the highest possible weight for</param>
+        /// <returns>the maximum possible percent of one rep max as an int</returns>
+        public static int repsMaxPercent1RM(int reps) {
+            if(reps == 1) {
+                return 100;
+            } else {
+                int basis = 95;
+                return (int)Math.Max(0, Math.Ceiling(basis - ((reps - 2) * 2.5)));
+            }
         }
 
         public static T randomElement<T>(this HashSet<T> set) {
@@ -86,5 +101,22 @@ namespace abs {
                 return false;
             }
         }
+
+        /// <summary>
+        /// returns a list of a static classes fields values
+        /// </summary>
+        public static List<T> GetStaticClassesFieldValues<T>(Type t) {
+            FieldInfo[] fields = t.GetFields();
+            List<T> values = new List<T>();
+            for (int i = 0; i < fields.Length; i++) {
+                var field = fields[i];
+                object val = field.GetRawConstantValue();
+                if (val.GetType().Equals(typeof(T))) {
+                    values.Add((T)field.GetRawConstantValue());
+                }
+            }
+            return values;
+        }
+        
     }
 }

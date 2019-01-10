@@ -15,6 +15,7 @@ namespace abs {
 
     public struct WorkoutSession {
         public List<WorkoutItem> workoutItems;
+        public List<BodyPart> bodyparts;//todo add this data to the workout
         public string primaryGroup;
         public string secondaryGroup;
         public DateTime date;
