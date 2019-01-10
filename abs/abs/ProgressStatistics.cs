@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using OxyPlot.Pdf;
 
@@ -18,12 +19,43 @@ namespace abs {
         public double Lin_Slope => points == null ? 0 : (Lin_M * Unit_Y / Unit_X.TotalDays);
         public double Lin_Significance => Math.Max(0, Math.Min(10, (points == null) ? 0 : (points.Count - 2))) * 0.1; //0 if there are no data points
 
-        public void MakePdf() {
-            OxyPlot.PdfRenderContext ctx = new OxyPlot.PdfRenderContext(500.0, 500.0, OxyPlot.OxyColor.FromRgb(255, 255, 255));
-            ctx.DrawText(new OxyPlot.ScreenPoint(250, 250), "test", OxyPlot.OxyColor.FromRgb(0, 0, 0), "Consolas", 100, 10.0, 0.0, OxyPlot.HorizontalAlignment.Center, OxyPlot.VerticalAlignment.Middle, null);
-            System.IO.FileStream st = new System.IO.FileStream("output.pdf", System.IO.FileMode.Create);
-            ctx.Save(st);
-            st.Close();
+        public void MakePdf(string title, System.IO.Stream output) {
+            const double width = 750, height = 500;
+
+            OxyPlot.PdfRenderContext ctx = new OxyPlot.PdfRenderContext(width, height, OxyPlot.OxyColor.FromRgb(255, 255, 255));
+
+            if (points.Count == 0) {
+                ctx.DrawText(new OxyPlot.ScreenPoint(250, 250), "test", OxyPlot.OxyColor.FromRgb(0, 0, 0), "Consolas", 100, 10.0, 0.0, OxyPlot.HorizontalAlignment.Center, OxyPlot.VerticalAlignment.Middle, null);
+            } else {
+                const double bX = 50, bY = 25;
+                const double mX = width - 2 * bX, mY = height - 2 * bY;
+
+                ctx.DrawLine(new List<OxyPlot.ScreenPoint> {
+                    new OxyPlot.ScreenPoint(bX, bY),
+                    new OxyPlot.ScreenPoint(mX + bX, bY),
+                    new OxyPlot.ScreenPoint(mX + bX, mY + bY),
+                    new OxyPlot.ScreenPoint(bX, mY + bY),
+                    new OxyPlot.ScreenPoint(bX, bY)
+                }, OxyPlot.OxyColor.FromRgb(0, 0, 0), 2, null, OxyPlot.LineJoin.Miter, false);
+
+                ctx.DrawLine(points.Select(point => new OxyPlot.ScreenPoint(point.x * mX + width / 2, point.y * mY + height / 2)).ToList(), OxyPlot.OxyColor.FromRgb(0, 0, 0), 2.0, null, OxyPlot.LineJoin.Round, false);
+
+                ctx.DrawText(new OxyPlot.ScreenPoint(width / 2, bY / 2), title, OxyPlot.OxyColor.FromRgb(0, 0, 0), "Consolas", 20, 10.0, 0.0, OxyPlot.HorizontalAlignment.Center, OxyPlot.VerticalAlignment.Middle, null);
+
+                const int sCount = 3;
+                for (int i = 0; i < sCount; i++) {
+                    double xNormalized = i / (double)(sCount - 1);
+                    double yNormalized = i / (double)(sCount - 1);
+                    double xScreen = bX + xNormalized * mX;
+                    double yScreen = bY + (1 - yNormalized) * mY;
+                    DateTime xlabel = Origin_X + Unit_X.Multiply(xNormalized);
+                    double ylabel = Origin_Y + Unit_Y * yNormalized;
+                    ctx.DrawText(new OxyPlot.ScreenPoint(xScreen, mY + 3 * bY / 2), xlabel.ToShortDateString(), OxyPlot.OxyColor.FromRgb(0, 0, 0), "Consolas", 15, 10.0, 0.0, OxyPlot.HorizontalAlignment.Center, OxyPlot.VerticalAlignment.Middle, null);
+                    ctx.DrawText(new OxyPlot.ScreenPoint(bX / 2, yScreen), ylabel.ToString("0.0"), OxyPlot.OxyColor.FromRgb(0, 0, 0), "Consolas", 15, 10.0, 0.0, OxyPlot.HorizontalAlignment.Center, OxyPlot.VerticalAlignment.Middle, null);
+                }
+            }
+
+            ctx.Save(output);
         }
   
 
@@ -84,9 +116,9 @@ namespace abs {
             if (min == max) return;
 
             Origin_X = new DateTime((max.Ticks + min.Ticks) / 2);
-            Unit_X = max - Origin_X;
+            Unit_X = max - min;
             Origin_Y = (ymin + ymax) / 2.0;
-            Unit_Y = ymax - Origin_Y;
+            Unit_Y = ymax - ymin;
 
             points = new List<Vec2>(rawData.Count);
             for(int i = 0; i < rawData.Count; i++) {

@@ -55,6 +55,10 @@ namespace abs {
             return plainResult;
         }
 
+        public static TimeSpan Multiply(this TimeSpan value, double scale) {
+            return TimeSpan.FromTicks((long)(value.Ticks * scale));
+        }
+
         public const int seed = 74975;
         public static Random r;
         public static int rand(int max) {
