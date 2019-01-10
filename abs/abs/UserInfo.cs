@@ -4,22 +4,24 @@ using System.Linq;
 using monopage;
 
 namespace abs {
-    public struct Calibration {
+    public class Calibration { 
         public int reps;
         public int weight;
         public DateTime? recorded;
 
         public bool Exists => reps != -1;
         public double Value => (1 + reps / 30.0) * weight;
+
+        public Calibration() { }
     }
 
-    public struct WorkoutSession {
+    public class WorkoutSession {
         public List<WorkoutItem> workoutItems;
         public List<BodyPart> bodyparts;//todo add this data to the workout
-        public string primaryGroup;
-        public string secondaryGroup;
+        public string primaryGroup = "N/A";
+        public string secondaryGroup = "N/A";
         public DateTime date;
-        public string uuid;
+        public string uuid = Guid.NewGuid().ToString();
 
         public mpObject toJSON(UserDataAccess user) {
             mpObject result = new mpObject();
@@ -41,11 +43,17 @@ namespace abs {
             foreach (mpObject item in ((mpArray)data.getChild("items"))) {
                 workoutItems.Add(new WorkoutItem(item));
             }
+            bodyparts = new List<BodyPart>();
+            foreach(mpValue item in (mpArray)data.getChild("bodyParts")) {
+                bodyparts.Add((BodyPart)item.data.asInt());
+            }
         }
+
+        public WorkoutSession() { }
     }
 
-    public struct WorkoutItem {
-        public string uuid;
+    public class WorkoutItem {
+        public string uuid = Guid.NewGuid().ToString();
         public Exercise ex;
         public List<WorkoutSet> sets;
         public int difficulty;
@@ -74,10 +82,12 @@ namespace abs {
                 sets.Add(new WorkoutSet(set));
             }
         }
+
+        public WorkoutItem() { }
     }
 
-    public struct WorkoutSet {
-        public string uuid;
+    public class WorkoutSet {
+        public string uuid = Guid.NewGuid().ToString();
         public int reps;
         public int percent1RM;
         public bool doneWithRest;
@@ -103,6 +113,8 @@ namespace abs {
             doneWithRest = ((mpValue)data.getChild("doneWithRest")).data.asBool();
             repsCompleted = ((mpValue)data.getChild("repsCompleted")).data.asInt();
         }
+
+        public WorkoutSet() { }
     }
     
     

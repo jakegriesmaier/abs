@@ -190,9 +190,9 @@ namespace abs {
                                 WorkoutGenerator p = new WorkoutGenerator(info);
 
                                 mpResponse res = mpResponse.success();
-                                //var day = p.generateDay(requestNumItems);
-                                //res.response = new binaryData(day.toJSON(info).ToString());
-                                //info.AddDay(day);
+                                WorkoutSession sesh = p.GenSesh(requestNumItems);
+                                res.response = new binaryData(sesh.toJSON(info).ToString());
+                                info.AddDay(sesh);
                                 info.Store();
                                 info.Dispose();
 

@@ -149,6 +149,14 @@ namespace abs {
             return new HashSet<Exercise>(exercises.Where(e => (e.areaNumber == subgroup)));
         }
 
+        public static HashSet<Exercise> group(HashSet<Exercise> exercises, BodyPart part) {
+            return new HashSet<Exercise>(exercises.Where(e => (e.mainBodyPart == part)));
+        }
+
+        public static HashSet<Exercise> group(HashSet<Exercise> exercises, BodyPart part, int subgroup) {
+            return new HashSet<Exercise>(exercises.Where(e => (e.mainBodyPart == part && e.areaNumber == subgroup)));
+        }
+
         public static HashSet<Exercise> onlyCompoundsInSubgroup(HashSet<Exercise> exercises, int subGroup) {
             return new HashSet<Exercise>(exercises.Where(e => (e.areaNumber == subGroup && e.isCompound)));
         }

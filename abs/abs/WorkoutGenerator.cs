@@ -28,7 +28,6 @@ namespace abs {
             this.bodyPart = part.Key;
             this.subgroupVolumes = part.Value;
         }
-
     }
 
     public class WorkoutGenerator {
@@ -111,7 +110,7 @@ namespace abs {
                 sorted.ForEach(kvp => res.bodyPartVolumes.Add(new Group(kvp)));
             } else {
                 res.bodyPartVolumes = new List<Group>();
-                Util.GetStaticClassesFieldValues<BodyPart>(typeof(BodyPart)).ForEach(bp => {
+                Enum.GetValues(typeof(BodyPart)).OfType<BodyPart>().ToList().ForEach(bp => {
                     res.bodyPartVolumes.Add(new Group(bp));
                 });
                 res.recentExercises = new HashSet<Exercise>();
@@ -152,6 +151,7 @@ namespace abs {
         /// <param name="workoutSlots"></param>
         /// <returns>a list of bodyparts that are in the workout session</returns>
         private List<BodyPart> CalculateBodyParts(HashSet<BodyPart> rejected, int workoutSlots) {
+            if (rejected == null) rejected = new HashSet<BodyPart>();
             List<BodyPart> bodyParts = new List<BodyPart>();
             int numParts = CalculateNumberBodyParts(workoutSlots, Constants.NUM_BODYPARTS - rejected.Count());
             history.bodyPartVolumes.Where(group => !rejected.Contains(group.bodyPart)).OrderBy(group => group.totalVolume).ToList().ForEach(group => {
@@ -194,11 +194,10 @@ namespace abs {
                 new KeyValuePair<int, double>(3,muscleGroup.subgroupVolumes.Item3)
             };
             sgs = sgs.OrderBy(sg => sg.Value).ToList();
-            int index = 0;
             int sg1, sg2, sg3;
             sg1 = sg2 = sg3 = 0;
             for(int i = 0; i < numExercises; i++) {
-                switch (sgs[index].Key) {
+                switch (sgs[i % 3].Key) {
                     case 1:
                         sg1++;
                         break;
@@ -209,7 +208,6 @@ namespace abs {
                         sg3++;
                         break;
                 }
-                index = (index == 3) ? 0 : index + 1;
             }
             return new Tuple<int, int, int>(sg1, sg2, sg3); 
         }
@@ -219,14 +217,18 @@ namespace abs {
             Dictionary<Exercise, ProgressStatistics> stats = history.exerciseStatistics;
 
             //first pick a random subgroup and find an exercise that is compound
-            int chosenSubgroup = 1 + Util.rand(3);
-            var g1c = Exercise.onlyCompoundsInSubgroup(Exercise.globalExercises, chosenSubgroup);
+            Distribution<int> subgroupChance = new Distribution<int>();
+            subgroupChance[1] = groupNums.Item1;
+            subgroupChance[2] = groupNums.Item2;
+            subgroupChance[3] = groupNums.Item3;
+            int chosenSubgroup = subgroupChance.select();
+            var g1c = Exercise.onlyCompoundsInSubgroup(Exercise.group(Exercise.globalExercises, part), chosenSubgroup);
             Exercise chosenEx = g1c.ElementAt(Util.rand(g1c.Count() - 1));
 
             //get a set of exercises for each subgroup, excluding the compound one we picked first
-            var g1s = Exercise.subgroup(Exercise.globalExercises, 1); if (chosenSubgroup == 1) g1s.Remove(chosenEx);
-            var g2s = Exercise.subgroup(Exercise.globalExercises, 2); if (chosenSubgroup == 2) g2s.Remove(chosenEx);
-            var g3s = Exercise.subgroup(Exercise.globalExercises, 3); if (chosenSubgroup == 3) g3s.Remove(chosenEx);
+            var g1s = Exercise.group(Exercise.globalExercises, part, 1); if (chosenSubgroup == 1) g1s.Remove(chosenEx);
+            var g2s = Exercise.group(Exercise.globalExercises, part, 2); if (chosenSubgroup == 2) g2s.Remove(chosenEx);
+            var g3s = Exercise.group(Exercise.globalExercises, part, 3); if (chosenSubgroup == 3) g3s.Remove(chosenEx);
 
             //create a probability distribution for each of the exercise sets
             Distribution<Exercise> dg1 = new Distribution<Exercise>();
@@ -237,19 +239,19 @@ namespace abs {
                 const double baseScore = 0.1;
                 double score = stats.ContainsKey(ex) ? stats[ex].Lin_Slope * stats[ex].Lin_Significance : 0.0;
                 dg1[ex] = Math.Max((history.recentExercises.Contains(ex) ? 0.3 : 0) + baseScore + score, 0.0);
-                Console.WriteLine(ex.exerciseName + ", " + dg1[ex]);
+                //Console.WriteLine(ex.exerciseName + ", " + dg1[ex]);
             }
             foreach (Exercise ex in g2s) {
                 const double baseScore = 0.1;
                 double score = stats.ContainsKey(ex) ? stats[ex].Lin_Slope * stats[ex].Lin_Significance : 0.0;
                 dg2[ex] = Math.Max((history.recentExercises.Contains(ex) ? 0.3 : 0) + baseScore + score, 0.0);
-                Console.WriteLine(ex.exerciseName + ", " + dg2[ex]);
+                //Console.WriteLine(ex.exerciseName + ", " + dg2[ex]);
             }
             foreach (Exercise ex in g3s) {
                 const double baseScore = 0.1;
                 double score = stats.ContainsKey(ex) ? stats[ex].Lin_Slope * stats[ex].Lin_Significance : 0.0;
                 dg3[ex] = Math.Max((history.recentExercises.Contains(ex) ? 0.3 : 0) + baseScore + score, 0.0);
-                Console.WriteLine(ex.exerciseName + ", " + dg3[ex]);
+                //Console.WriteLine(ex.exerciseName + ", " + dg3[ex]);
             }
 
             //pick a bunch of random exercises from the subgroup sets we've found earlier
@@ -257,10 +259,10 @@ namespace abs {
             res.UnionWith(dg2.selectN_unique(groupNums.Item2));
             res.UnionWith(dg3.selectN_unique(groupNums.Item3));
 
-            Console.WriteLine("Chosen exercises:");
-            foreach(Exercise ex in res) {
-                Console.WriteLine(ex.exerciseName);
-            }
+            //Console.WriteLine("Chosen exercises:");
+            //foreach(Exercise ex in res) {
+            //    Console.WriteLine(ex.exerciseName);
+            //}
 
             return res.ToList();
         }
@@ -275,23 +277,28 @@ namespace abs {
             int choice = rand.Next(1,3);
             if((choice == 1) && (parts.Count() > 1)) { //alternate muscle group exercises and all compounds first
                 //1 remove compounds and place at the front of the workout
-                int total = 0;
                 List<Exercise> compound = new List<Exercise>();
+                int total = 0;
                 for(int i = 0; i < parts.Count(); i++) {
+                    total += parts[i].Value.Count;
                     compound.AddRange(parts[i].Value.Where(ex => ex.isCompound).ToList());
                     List<Exercise> isolation = parts[i].Value.Where(ex => !ex.isCompound).ToList();
                     parts[i] = new KeyValuePair<BodyPart, List<Exercise>>(parts[i].Key, isolation);
-                    total += isolation.Count();
                 }
                 compound.ForEach(cmp => items.Add(new WorkoutItem { ex = cmp }));
                 //2 select from each group 1 at a time until there are none left
+                
                 int index = 0;
                 while (items.Count() < total) {
+                    bool foundAny = false;
                     for (int i = 0; i < parts.Count(); i++) {
                         if (index < parts[i].Value.Count()) {
                             items.Add(new WorkoutItem { ex = parts[i].Value[index] });
+                            foundAny = true;
                         }
                     }
+
+                    if (!foundAny) break;
                     index++;
                 }
             } else { //all of one muscle group and then the next...
@@ -401,7 +408,7 @@ namespace abs {
         /// <returns>the percent of the total one rep max that should be performed</returns>
         private int CalculatePercentOfMax(int numSetsExercise, int setNumberExercise, int numReps, double numBodyPartSets, double bodyPartSetNumber) {
             int percent = Util.repsMaxPercent1RM(numReps);//gets the maximum possible percent for that number of reps
-            if ((bodyPartSetNumber / numBodyPartSets) >= .9) {//need to add in volume curve? or will this effect the individual exercise progression?
+            if (((bodyPartSetNumber + 1) / numBodyPartSets) >= .9) {//need to add in volume curve? or will this effect the individual exercise progression?
                 percent -= 2;
             }
             if (bodyPartSetNumber == 1) {
@@ -436,10 +443,8 @@ namespace abs {
 
             List<KeyValuePair<BodyPart, Tuple<int, int, int>>> bodyPartSubgroups = new List<KeyValuePair<BodyPart, Tuple<int, int, int>>>();
             int[] distribution = new int[workout.bodyparts.Count()];
-            int index = 0;
             for(int i = 0; i < workoutSlots; i++) {
-                distribution[index]++;
-                index = (index == distribution.Count() + 1) ? 0 : (index + 1);
+                distribution[i % distribution.Length]++;
             }
 
             for (int i = 0; i < workout.bodyparts.Count(); i++) {
@@ -471,7 +476,7 @@ namespace abs {
         /// <summary>
         /// initialized and calculates all of the values for the users history
         /// </summary>
-        public void BuildWorkoutHistory() {
+        private void BuildWorkoutHistory() {
             history = new ExerciseHistory();
             history = CalculateBodyPartVolumes();
             history.exerciseStatistics = CalculateExerciseProgress(history);
@@ -480,6 +485,7 @@ namespace abs {
         public WorkoutGenerator(UserDataAccess user) {
             this.user = user;
             BuildWorkoutHistory();
+            
         }
     }
 }
